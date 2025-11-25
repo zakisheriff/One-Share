@@ -1,0 +1,64 @@
+{
+  "source": "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/SidebarView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Devices",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 15
+        }
+      },
+      {
+        "comment": "",
+        "key": "Favorites",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mac",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "Android",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Downloads",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "Documents",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pictures",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 27
+        }
+      }
+    ]
+  },
+  "version": 1
+}

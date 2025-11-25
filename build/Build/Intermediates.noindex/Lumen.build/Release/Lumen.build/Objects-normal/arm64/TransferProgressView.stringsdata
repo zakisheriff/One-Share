@@ -1,0 +1,16 @@
+{
+  "source": "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/TransferProgressView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Copying \"%@\"",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 26
+        }
+      }
+    ]
+  },
+  "version": 1
+}

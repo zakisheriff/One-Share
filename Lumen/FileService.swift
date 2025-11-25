@@ -8,9 +8,9 @@
 import Foundation
 
 protocol FileService {
-    func listItems(at path: String) throws -> [FileSystemItem]
-    func downloadFile(at path: String, to localURL: URL) throws
-    func uploadFile(from localURL: URL, to path: String) throws
+    func listItems(at path: String) async throws -> [FileSystemItem]
+    func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws
+    func uploadFile(from localURL: URL, to path: String, progress: @escaping (Double, String) -> Void) async throws
 }
 
 class MockFileService: FileService {
@@ -20,7 +20,21 @@ class MockFileService: FileService {
         self.mockItems = items
     }
     
-    func listItems(at path: String) throws -> [FileSystemItem] {
+    func listItems(at path: String) async throws -> [FileSystemItem] {
         return mockItems
+    }
+    
+    func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws {
+        print("Mock download from \(path) to \(localURL)")
+        progress(0.5, "Downloading...")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        progress(1.0, "Done")
+    }
+    
+    func uploadFile(from localURL: URL, to path: String, progress: @escaping (Double, String) -> Void) async throws {
+        print("Mock upload from \(localURL) to \(path)")
+        progress(0.5, "Uploading...")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        progress(1.0, "Done")
     }
 }

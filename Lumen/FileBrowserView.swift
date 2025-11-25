@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum SortOption: String, CaseIterable, Identifiable {
     case name = "Name"
@@ -24,6 +25,8 @@ struct FileBrowserView: View {
     @State private var items: [FileSystemItem] = []
     @State private var selection = Set<UUID>()
     @State private var errorMessage: String?
+    
+    @State private var isLoading = false
     
     // Finder Features State
     @State private var searchText = ""
@@ -57,12 +60,23 @@ struct FileBrowserView: View {
     }
     
     private func loadItems() {
-        do {
-            items = try fileService.listItems(at: currentPath)
-            errorMessage = nil
-        } catch {
-            errorMessage = "Error loading files: \(error.localizedDescription)"
-            items = []
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                let newItems = try await fileService.listItems(at: currentPath)
+                await MainActor.run {
+                    self.items = newItems
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Error loading files: \(error.localizedDescription)"
+                    self.items = []
+                    self.isLoading = false
+                }
+            }
         }
     }
     
@@ -129,6 +143,16 @@ struct FileBrowserView: View {
                 .menuStyle(.borderlessButton)
                 .frame(width: 30)
                 
+                // Paste Button
+                if clipboard != nil {
+                    Button(action: {
+                        onPaste(currentPath)
+                    }) {
+                        Image(systemName: "doc.on.clipboard")
+                    }
+                    .help("Paste")
+                }
+                
                 // View Toggle
                 Picker("View", selection: $isGridView) {
                     Image(systemName: "list.bullet").tag(false)
@@ -139,15 +163,11 @@ struct FileBrowserView: View {
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
-            .contextMenu {
-                if clipboard != nil {
-                    Button("Paste") {
-                        onPaste(currentPath)
-                    }
-                }
-            }
             
-            if let error = errorMessage {
+            if isLoading {
+                ProgressView("Loading...")
+                    .padding()
+            } else if let error = errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
                     .padding()
@@ -187,6 +207,10 @@ struct FileBrowserView: View {
                                 Button("Copy") {
                                     clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
                                 }
+                            }
+                            .onDrag {
+                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                return NSItemProvider(object: item.path as NSString)
                             }
                         }
                     }
@@ -233,11 +257,29 @@ struct FileBrowserView: View {
                                     clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
                                 }
                             }
+                            .onDrag {
+                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                return NSItemProvider(object: item.path as NSString)
+                            }
                         }
                     }
                 }
             }
             .background(Color(NSColor.textBackgroundColor))
+            .onDrop(of: [.text], isTargeted: nil) { providers in
+                if clipboard != nil {
+                    onPaste(currentPath)
+                    return true
+                }
+                return false
+            }
+            .contextMenu {
+                if clipboard != nil {
+                    Button("Paste") {
+                        onPaste(currentPath)
+                    }
+                }
+            }
         }
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(8)
@@ -258,7 +300,9 @@ struct FileBrowserView: View {
             FileSystemItem(name: "Documents", path: "/Documents", size: 0, type: .folder, modificationDate: Date()),
             FileSystemItem(name: "Photo.jpg", path: "/Photo.jpg", size: 1024 * 1024 * 2, type: .image, modificationDate: Date())
         ]),
-        currentPath: "/Documents"
+        currentPath: "/Documents",
+        clipboard: .constant(nil),
+        onPaste: { _ in }
     )
     .padding()
 }

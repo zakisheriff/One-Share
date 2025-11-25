@@ -1,0 +1,12 @@
+{
+  "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/ADBService.swift" : {
+    "abi-baseline-json" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.abi.json",
+    "const-values" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-primary.swiftconstvalues",
+    "dependencies" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-primary.d",
+    "diagnostics" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-primary.dia",
+    "objc-header" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-Swift.h",
+    "swiftdoc" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.swiftdoc",
+    "swiftmodule" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.swiftmodule",
+    "swiftsourceinfo" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.swiftsourceinfo"
+  }
+}

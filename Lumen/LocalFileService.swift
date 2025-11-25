@@ -11,7 +11,7 @@ import AppKit
 class LocalFileService: FileService {
     private let fileManager = FileManager.default
     
-    func listItems(at path: String) throws -> [FileSystemItem] {
+    func listItems(at path: String) async throws -> [FileSystemItem] {
         let url = URL(fileURLWithPath: path)
         print("DEBUG: Listing items at \(path)")
         
@@ -34,43 +34,62 @@ class LocalFileService: FileService {
         
         let resourceKeys: [URLResourceKey] = [.nameKey, .fileSizeKey, .isDirectoryKey, .contentModificationDateKey, .contentTypeKey]
         
-        let urls = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: resourceKeys, options: [.skipsHiddenFiles])
-        print("DEBUG: Found \(urls.count) items at \(path)")
-        
-        return urls.compactMap { url -> FileSystemItem? in
-            do {
-                let resourceValues = try url.resourceValues(forKeys: Set(resourceKeys))
-                let name = resourceValues.name ?? url.lastPathComponent
-                let size = Int64(resourceValues.fileSize ?? 0)
-                let isDirectory = resourceValues.isDirectory ?? false
-                let modificationDate = resourceValues.contentModificationDate ?? Date()
-                
-                let type: FileType
-                if isDirectory {
-                    type = .folder
-                } else {
-                    let ext = url.pathExtension.lowercased()
-                    switch ext {
-                    case "jpg", "jpeg", "png", "heic", "gif": type = .image
-                    case "mp4", "mov", "mkv", "avi": type = .video
-                    case "mp3", "wav", "m4a": type = .audio
-                    case "pdf", "doc", "docx", "txt", "md": type = .document
-                    case "zip", "rar", "7z", "tar": type = .archive
-                    default: type = .file
+        // Run on background thread to avoid blocking even for local files
+        return try await Task.detached(priority: .userInitiated) {
+            let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: resourceKeys, options: [.skipsHiddenFiles])
+            print("DEBUG: Found \(urls.count) items at \(path)")
+            
+            return urls.compactMap { url -> FileSystemItem? in
+                do {
+                    let resourceValues = try url.resourceValues(forKeys: Set(resourceKeys))
+                    let name = resourceValues.name ?? url.lastPathComponent
+                    let size = Int64(resourceValues.fileSize ?? 0)
+                    let isDirectory = resourceValues.isDirectory ?? false
+                    let modificationDate = resourceValues.contentModificationDate ?? Date()
+                    
+                    let type: FileType
+                    if isDirectory {
+                        type = .folder
+                    } else {
+                        let ext = url.pathExtension.lowercased()
+                        switch ext {
+                        case "jpg", "jpeg", "png", "heic", "gif": type = .image
+                        case "mp4", "mov", "mkv", "avi": type = .video
+                        case "mp3", "wav", "m4a": type = .audio
+                        case "pdf", "doc", "docx", "txt", "md": type = .document
+                        case "zip", "rar", "7z", "tar": type = .archive
+                        default: type = .file
+                        }
                     }
+                    
+                    return FileSystemItem(
+                        name: name,
+                        path: url.path,
+                        size: size,
+                        type: type,
+                        modificationDate: modificationDate
+                    )
+                } catch {
+                    print("DEBUG: Failed to get resource values for \(url.path): \(error)")
+                    return nil
                 }
-                
-                return FileSystemItem(
-                    name: name,
-                    path: url.path,
-                    size: size,
-                    type: type,
-                    modificationDate: modificationDate
-                )
-            } catch {
-                print("DEBUG: Failed to get resource values for \(url.path): \(error)")
-                return nil
             }
-        }
+        }.value
+    }
+    
+    func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws {
+        // For local service, "download" is just a copy
+        progress(0, "Preparing...")
+        let sourceURL = URL(fileURLWithPath: path)
+        try fileManager.copyItem(at: sourceURL, to: localURL)
+        progress(1.0, "Completed")
+    }
+    
+    func uploadFile(from localURL: URL, to path: String, progress: @escaping (Double, String) -> Void) async throws {
+        // For local service, "upload" is just a copy
+        progress(0, "Preparing...")
+        let destURL = URL(fileURLWithPath: path).appendingPathComponent(localURL.lastPathComponent)
+        try fileManager.copyItem(at: localURL, to: destURL)
+        progress(1.0, "Completed")
     }
 }
