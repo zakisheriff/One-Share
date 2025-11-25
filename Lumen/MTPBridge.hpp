@@ -31,8 +31,10 @@ typedef void (*MTPProgressCallback)(uint64_t sent, uint64_t total, const void* c
 
 // Functions
 bool mtp_connect(void);
+bool mtp_reconnect(void);
 void mtp_disconnect(void);
 bool mtp_is_connected(void);
+bool mtp_check_storage(void);
 char* mtp_get_device_name(void);
 
 // Listing

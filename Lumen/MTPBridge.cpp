@@ -41,8 +41,31 @@ void mtp_disconnect() {
     }
 }
 
+bool mtp_reconnect() {
+    mtp_disconnect();
+    return mtp_connect();
+}
+
 bool mtp_is_connected() {
     return (device != NULL);
+}
+
+bool mtp_check_storage() {
+    if (device == NULL) return false;
+    
+    // Refresh storage list
+    if (LIBMTP_Get_Storage(device, LIBMTP_STORAGE_SORTBY_NOTSORTED) != 0) {
+        // Error getting storage, might be disconnected or locked
+        // But LIBMTP_Get_Storage returns -1 on error, 0 on success?
+        // Actually checking libmtp docs/source:
+        // LIBMTP_Get_Storage returns 0 on success, -1 on failure.
+        // It populates device->storage.
+    }
+    
+    // Even if Get_Storage fails, we check if device->storage is non-null
+    // If the device is locked, usually we can't get storage info.
+    
+    return (device->storage != NULL);
 }
 
 char* mtp_get_device_name() {

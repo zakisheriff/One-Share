@@ -21,9 +21,15 @@ class MTPService: FileService {
     private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
     
     // Device monitoring
+    enum ConnectionState {
+        case disconnected
+        case connectedLocked // Connected but no storage access (needs permission)
+        case connected // Connected and ready
+    }
+    
     private var deviceMonitoringTimer: Timer?
-    private var lastConnectionState: Bool = false
-    var onDeviceConnectionChange: ((Bool) -> Void)?
+    private var lastConnectionState: ConnectionState = .disconnected
+    var onDeviceConnectionChange: ((ConnectionState) -> Void)?
     
     init() {
         log("MTPService init")
@@ -65,7 +71,7 @@ class MTPService: FileService {
     
     // Device monitoring functions
     private func startDeviceMonitoring() {
-        deviceMonitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        deviceMonitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             self.checkDeviceConnection()
         }
     }
@@ -77,20 +83,69 @@ class MTPService: FileService {
     
     private func checkDeviceConnection() {
         queue.async {
-            let isConnected = mtp_is_connected()
+            var currentState: ConnectionState = .disconnected
+            
+            if mtp_is_connected() {
+                // Device is physically connected, check storage access
+                if mtp_check_storage() {
+                    currentState = .connected
+                } else {
+                    // If we are locked, try to reconnect to see if permission was granted
+                    // This is "polling" for permission
+                    if self.lastConnectionState == .connectedLocked {
+                        if mtp_reconnect() && mtp_check_storage() {
+                            currentState = .connected
+                        } else {
+                            currentState = .connectedLocked
+                        }
+                    } else {
+                        currentState = .connectedLocked
+                    }
+                }
+            } else {
+                // Try to connect if not connected
+                if mtp_connect() {
+                     if mtp_check_storage() {
+                        currentState = .connected
+                    } else {
+                        currentState = .connectedLocked
+                    }
+                } else {
+                    currentState = .disconnected
+                }
+            }
             
             // If connection state changed, notify
-            if isConnected != self.lastConnectionState {
-                self.lastConnectionState = isConnected
+            if currentState != self.lastConnectionState {
+                self.log("Connection state changed: \(self.lastConnectionState) -> \(currentState)")
+                self.lastConnectionState = currentState
                 DispatchQueue.main.async {
-                    self.onDeviceConnectionChange?(isConnected)
+                    self.onDeviceConnectionChange?(currentState)
                 }
             }
             
             // If we're connected but our cache is empty, try to refresh
-            if isConnected && self.listingCache.isEmpty {
+            if currentState == .connected && self.listingCache.isEmpty {
                 // Force a refresh when device is first detected
                 self.listingCache.removeAll()
+            }
+        }
+    }
+    
+    // Force a reconnection (e.g. when user clicks "Allowed")
+    func reconnect() async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                let success = mtp_reconnect()
+                if success && mtp_check_storage() {
+                    self.lastConnectionState = .connected
+                    DispatchQueue.main.async {
+                        self.onDeviceConnectionChange?(.connected)
+                    }
+                    continuation.resume(returning: true)
+                } else {
+                    continuation.resume(returning: false)
+                }
             }
         }
     }
@@ -271,6 +326,37 @@ class MTPService: FileService {
                     continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: nil))
                 }
             }
+        }
+    }
+    
+    func downloadFolder(at path: String, to localURL: URL, progress: @escaping (Double, String) -> Void) async throws {
+        // Create the local directory
+        try FileManager.default.createDirectory(at: localURL, withIntermediateDirectories: true, attributes: nil)
+        
+        // List items in the folder
+        let items = try await listItems(at: path)
+        
+        let totalItems = Double(items.count)
+        var processedItems = 0.0
+        
+        for item in items {
+            let itemLocalURL = localURL.appendingPathComponent(item.name)
+            
+            if item.isDirectory {
+                try await downloadFolder(at: item.path, to: itemLocalURL) { p, s in
+                    // Propagate progress? For now just update main status
+                    let overallProgress = (processedItems + p) / totalItems
+                    progress(overallProgress, "Downloading \(item.name)...")
+                }
+            } else {
+                try await downloadFile(at: item.path, to: itemLocalURL, size: item.size) { p, s in
+                    let overallProgress = (processedItems + p) / totalItems
+                    progress(overallProgress, "Downloading \(item.name)...")
+                }
+            }
+            
+            processedItems += 1.0
+            progress(processedItems / totalItems, "Downloaded \(item.name)")
         }
     }
     

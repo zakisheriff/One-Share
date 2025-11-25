@@ -36,6 +36,7 @@ struct FileBrowserView: View {
     
     // Auto-refresh state
     @State private var isAutoRefreshing: Bool = false
+    @State private var connectionState: MTPService.ConnectionState = .disconnected
     
     // Computed properties for path display and navigation
     private var canNavigateUp: Bool {
@@ -449,8 +450,9 @@ struct FileBrowserView: View {
             )
         }
         .padding(.horizontal)
+        .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        // .background(.ultraThinMaterial) // Removed to allow unified window background to show through
     }
     
     // Computed property for the file content view
@@ -558,20 +560,53 @@ struct FileBrowserView: View {
     private var emptyStateView: some View {
         VStack {
             if currentPath.hasPrefix("mtp://") {
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.0)
-                        .frame(width: 30, height: 30)
-                    
-                    Text("Connecting to Android device...")
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Make sure your device is connected and USB debugging is enabled")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+                VStack(spacing: 20) {
+                    if connectionState == .connectedLocked {
+                        // Waiting for permission
+                        Image(systemName: "lock.shield")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.orange)
+                            .symbolEffect(.pulse)
+                        
+                        VStack(spacing: 8) {
+                            Text("Unlock Your Device")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            
+                            Text("Please unlock your Android device and tap 'Allow' on the USB debugging or file transfer prompt.")
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 300)
+                        }
+                        
+                        Button("I've Allowed Access") {
+                            Task {
+                                if let mtpService = fileService as? MTPService {
+                                    _ = await mtpService.reconnect()
+                                }
+                                loadItems()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        
+                    } else {
+                        // Connecting or Disconnected
+                        ProgressView()
+                            .scaleEffect(1.0)
+                            .frame(width: 30, height: 30)
+                        
+                        Text("Connecting to Android device...")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("Make sure your device is connected and USB debugging is enabled")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .frame(maxWidth: 300)
                 .padding()
@@ -623,19 +658,29 @@ struct FileBrowserView: View {
                 .foregroundColor(.primary)
         }
         .padding(6)
-        .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+        .background(
+            ZStack {
+                if selection.contains(item.id) {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.15))
+                    
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                }
+            }
+        )
         .cornerRadius(12)
         .hoverEffect()
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
         }
-        .onTapGesture {
+        .simultaneousGesture(TapGesture().onEnded {
             if selection.contains(item.id) {
                 selection.remove(item.id)
             } else {
                 selection = [item.id]
             }
-        }
+        })
         .contextMenu {
             fileContextMenu(for: item)
         }
@@ -681,15 +726,25 @@ struct FileBrowserView: View {
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 12)
-        .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+        .background(
+            ZStack {
+                if selection.contains(item.id) {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.15))
+                    
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                }
+            }
+        )
         .contentShape(Rectangle())
         .hoverEffect()
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
         }
-        .onTapGesture {
+        .simultaneousGesture(TapGesture().onEnded {
             selection = [item.id]
-        }
+        })
         .contextMenu {
             fileContextMenu(for: item)
         }
@@ -727,7 +782,17 @@ struct FileBrowserView: View {
         clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
         if item.path.hasPrefix("mtp://") {
             let itemProvider = NSItemProvider()
-            let fileType = UTType(filenameExtension: (item.name as NSString).pathExtension)?.identifier ?? "public.data"
+            
+            // Fix 1: Set the suggested name so Finder knows what to call it
+            itemProvider.suggestedName = item.name
+            
+            // Determine correct type identifier
+            let fileType: String
+            if item.isDirectory {
+                fileType = UTType.folder.identifier
+            } else {
+                fileType = UTType(filenameExtension: (item.name as NSString).pathExtension)?.identifier ?? "public.data"
+            }
             
             let service = fileService
             itemProvider.registerFileRepresentation(forTypeIdentifier: fileType, fileOptions: [], visibility: .all) { completionHandler in
@@ -740,7 +805,12 @@ struct FileBrowserView: View {
                         try? FileManager.default.removeItem(at: tempURL)
                         
                         if let mtpService = service as? MTPService {
-                            try await mtpService.downloadFile(at: item.path, to: tempURL, size: item.size) { _, _ in }
+                            if item.isDirectory {
+                                // Fix 2: Handle folder download recursively
+                                try await mtpService.downloadFolder(at: item.path, to: tempURL) { _, _ in }
+                            } else {
+                                try await mtpService.downloadFile(at: item.path, to: tempURL, size: item.size) { _, _ in }
+                            }
                             // Completion handler expects: (URL?, Bool, Error?)
                             // Bool is 'coordinated'. We pass false for temp file.
                             completionHandler(tempURL, false, nil)
@@ -779,18 +849,27 @@ struct FileBrowserView: View {
             
             // Set up device connection monitoring for MTP services
             if let mtpService = fileService as? MTPService {
-                mtpService.onDeviceConnectionChange = { isConnected in
-                    if isConnected && currentPath.hasPrefix("mtp://") {
-                        // Device connected, refresh the view
-                        DispatchQueue.main.async {
-                            // Clear cache and refresh
-                            loadItems()
-                        }
-                    } else if !isConnected && currentPath.hasPrefix("mtp://") && items.isEmpty {
-                        // Device disconnected, clear items and show connection message
-                        DispatchQueue.main.async {
-                            items = []
-                            errorMessage = nil
+                mtpService.onDeviceConnectionChange = { state in
+                    DispatchQueue.main.async {
+                        self.connectionState = state
+                        
+                        switch state {
+                        case .connected:
+                            if currentPath.hasPrefix("mtp://") {
+                                // Device connected and unlocked, refresh
+                                loadItems()
+                            }
+                        case .connectedLocked:
+                            // Device connected but locked, UI will update via connectionState
+                            if currentPath.hasPrefix("mtp://") {
+                                errorMessage = nil // Clear any previous errors
+                                items = [] // Clear items to show empty state
+                            }
+                        case .disconnected:
+                            if currentPath.hasPrefix("mtp://") {
+                                items = []
+                                errorMessage = nil
+                            }
                         }
                     }
                 }

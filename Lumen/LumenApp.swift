@@ -13,5 +13,6 @@ struct LumenApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowToolbarStyle(.unified)
     }
 }

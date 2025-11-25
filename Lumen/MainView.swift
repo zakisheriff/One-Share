@@ -20,7 +20,6 @@ struct MainView: View {
     var body: some View {
         NavigationSplitView {
             SidebarView(selectedCategory: $selectedCategory)
-                .background(.ultraThinMaterial) // Native sidebar material
         } detail: {
             ZStack {
                 Group {
@@ -93,7 +92,7 @@ struct MainView: View {
                     )
                 }
             }
-            .background(.regularMaterial) // Main content glass effect
+            // .background(.regularMaterial) // Removed to allow unified window background to show through
         }
         .frame(minWidth: 800, minHeight: 500)
         .toolbar {
