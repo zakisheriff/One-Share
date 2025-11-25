@@ -1,12 +1,27 @@
-# Lumen ⚡️
-### The Next-Generation Android File Transfer for macOS
+# <div align="center">Lumen ⚡️</div>
 
-![Lumen Banner](https://img.shields.io/badge/Lumen-macOS_26_Ready-blue?style=for-the-badge&logo=apple)
-![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift)
-![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey?style=flat-square&logo=apple)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+<div align="center">
+  <strong>The Next-Generation Android File Transfer for macOS</strong>
+</div>
 
-> **Experience the future of file transfer.** Lumen isn't just a tool; it's a seamless extension of your Mac, designed with the fluid, glassy aesthetics of **macOS 26**.
+<br />
+
+<div align="center">
+  <img src="https://img.shields.io/badge/macOS-Sequioa_Ready-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS Ready" />
+  <img src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="Swift 5.9" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+  <br />
+  <br />
+  <a href="https://github.com/zakisheriff/Lumen/releases/latest">
+    <img src="https://img.shields.io/badge/Download_Lumen-DMG-blue?style=for-the-badge&logo=apple&logoColor=white" alt="Download DMG" />
+  </a>
+</div>
+
+<br />
+
+> **"It feels like it was built by Apple."**
+>
+> Lumen isn't just a tool; it's a seamless extension of your Mac. Designed with the fluid, glassy aesthetics of **macOS 26**, it bridges the gap between your Android device and your Mac with elegance and speed.
 
 ---
 
@@ -32,23 +47,24 @@ Forget the clunky, outdated file transfer tools of the past. Lumen is built from
 
 ---
 
-## 🛠️ Technical Highlights
+## � Download & Install
 
-Lumen is a showcase of modern macOS development:
+You don't need to be a developer to use Lumen. Just download the app and start transferring.
 
--   **Swift Concurrency**: Powered by `async/await` for a UI that never freezes.
--   **Interoperability**: A robust C++ bridge connecting Swift to the low-level `libmtp` library.
--   **System Integration**:
-    -   **NSFilePromiseProvider**: Native drag-and-drop support that plays nicely with Finder.
-    -   **Unified Toolbar**: A modern window style that maximizes screen real estate.
+1.  **[Download the latest .dmg file](https://github.com/zakisheriff/Lumen/releases/latest)** from our Releases page.
+2.  Open the `.dmg` file.
+3.  Drag **Lumen** into your **Applications** folder.
+4.  Launch Lumen and connect your Android phone!
 
 ---
 
-## 📦 Installation
+## 🛠️ For Developers
+
+Lumen is a showcase of modern macOS development. If you want to build it yourself:
 
 1.  **Clone the repo**:
     ```bash
-    git clone https://github.com/yourusername/Lumen.git
+    git clone https://github.com/zakisheriff/Lumen.git
     ```
 2.  **Install Dependencies**:
     Ensure you have `libmtp` installed via Homebrew:
@@ -60,27 +76,18 @@ Lumen is a showcase of modern macOS development:
 
 ---
 
-## 🤝 Contributing
+## ☕️ Support the Magic
 
-We believe in open source. Want to make Lumen even better?
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+If Lumen saved you time (or just looks too good to resist), consider buying me a coffee! Your support keeps the updates coming.
 
----
-
-## ☕️ Support
-
-If Lumen saved you time (or just looks too good to resist), consider buying me a coffee!
-
-<a href="https://buymeacoffee.com/zakisherifw">
-  <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=zakisherifw&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
+<div align="center">
+<a href="https://buymeacoffee.com/zakisherifw" target="_blank">
+<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
 </a>
+</div>
 
 ---
 
 <p align="center">
-  Made with ❤️ and Swift by Zaki Sheriff
+  Made with ❤️ and Swift by <strong>Zaki Sheriff</strong>
 </p>
