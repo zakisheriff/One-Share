@@ -4,42 +4,186 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "Loading...",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 168
-        }
-      },
-      {
-        "comment": "",
         "key": "Search",
         "location": {
-          "startingColumn": 27,
-          "startingLine": 129
+          "startingColumn": 23,
+          "startingLine": 401
         }
       },
       {
         "comment": "",
         "key": "Paste",
         "location": {
-          "startingColumn": 27,
-          "startingLine": 153
+          "startingColumn": 23,
+          "startingLine": 429
         }
       },
       {
         "comment": "",
         "key": "View",
         "location": {
-          "startingColumn": 24,
-          "startingLine": 157
+          "startingColumn": 20,
+          "startingLine": 433
         }
       },
       {
         "comment": "",
-        "key": "Sort By",
+        "key": "Home",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 363
+        }
+      },
+      {
+        "comment": "",
+        "key": "Back",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Forward",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Refresh",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 389
+        }
+      },
+      {
+        "comment": "",
+        "key": "⚠️ Error",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 458
+        }
+      },
+      {
+        "comment": "",
+        "key": "Retry",
         "location": {
           "startingColumn": 28,
-          "startingLine": 135
+          "startingLine": 518
+        }
+      },
+      {
+        "comment": "",
+        "key": "📱 Android Device Connection Troubleshooting",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 469
+        }
+      },
+      {
+        "comment": "",
+        "key": "1. Check USB Connection",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "• Ensure your Android device is properly connected via USB cable\n• Try a different USB cable or port",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "2. Enable Developer Options & USB Debugging",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 481
+        }
+      },
+      {
+        "comment": "",
+        "key": "• Go to Settings > About Phone/Tablet\n• Tap \"Build Number\" 7 times to enable Developer Options\n• Go back to Settings > Developer Options\n• Enable \"USB Debugging\"\n• On some devices: Enable \"USB debugging (Security settings)\"",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 485
+        }
+      },
+      {
+        "comment": "",
+        "key": "3. Allow Permission on Device",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 489
+        }
+      },
+      {
+        "comment": "",
+        "key": "• Unlock your Android device\n• Look for a notification asking for permission\n• Tap the notification and select \"Allow\" or \"OK\"\n• Some devices may show a dialog box on the screen - tap \"Allow\"",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 493
+        }
+      },
+      {
+        "comment": "",
+        "key": "4. Close Conflicting Applications",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 497
+        }
+      },
+      {
+        "comment": "",
+        "key": "• Close any other apps that might be accessing your device (e.g., Android File Transfer, Preview)\n• Restart this app after closing other apps",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 501
+        }
+      },
+      {
+        "comment": "",
+        "key": "5. Still Having Issues?",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 505
+        }
+      },
+      {
+        "comment": "",
+        "key": "• Try disconnecting and reconnecting your device\n• Restart both your computer and Android device\n• Ensure you have the latest device drivers installed",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 509
+        }
+      },
+      {
+        "comment": "",
+        "key": "No items found",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 546
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connecting to Android device...",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 533
+        }
+      },
+      {
+        "comment": "",
+        "key": "Make sure your device is connected and USB debugging is enabled",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 537
         }
       },
       {
@@ -47,7 +191,39 @@
         "key": "Copy",
         "location": {
           "startingColumn": 40,
-          "startingLine": 207
+          "startingLine": 590
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Get Info",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 599
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duplicate",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 604
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 609
         }
       },
       {
@@ -55,15 +231,79 @@
         "key": "Copy",
         "location": {
           "startingColumn": 40,
-          "startingLine": 256
+          "startingLine": 661
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 666
+        }
+      },
+      {
+        "comment": "",
+        "key": "Get Info",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 670
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duplicate",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 675
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 680
         }
       },
       {
         "comment": "",
         "key": "Paste",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 278
+          "startingColumn": 24,
+          "startingLine": 703
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete File",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 748
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 749
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 750
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete %@? This action cannot be undone.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 757
         }
       }
     ]

@@ -5,6 +5,91 @@
 	<key>logFormatVersion</key>
 	<integer>11</integer>
 	<key>logs</key>
-	<dict/>
+	<dict>
+		<key>3AAFEA63-4DF5-41B3-91FD-2D7EDC6C9CA3</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>3AAFEA63-4DF5-41B3-91FD-2D7EDC6C9CA3.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lumen project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lumen</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project Lumen with scheme Lumen and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>785752886.55345094</real>
+			<key>timeStoppedRecording</key>
+			<real>785752886.82076299</real>
+			<key>title</key>
+			<string>Cleaning project Lumen with scheme Lumen and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>3AAFEA63-4DF5-41B3-91FD-2D7EDC6C9CA3</string>
+		</dict>
+		<key>A4A78F12-67D1-4563-8F0D-44DFDFDB3E7A</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>A4A78F12-67D1-4563-8F0D-44DFDFDB3E7A.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Lumen project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Lumen</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project Lumen with scheme Lumen and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>785752677.53924096</real>
+			<key>timeStoppedRecording</key>
+			<real>785752677.84620094</real>
+			<key>title</key>
+			<string>Cleaning project Lumen with scheme Lumen and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>A4A78F12-67D1-4563-8F0D-44DFDFDB3E7A</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

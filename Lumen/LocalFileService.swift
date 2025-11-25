@@ -32,7 +32,7 @@ class LocalFileService: FileService {
             throw NSError(domain: "LocalFileService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Permission denied for path: \(path)"])
         }
         
-        let resourceKeys: [URLResourceKey] = [.nameKey, .fileSizeKey, .isDirectoryKey, .contentModificationDateKey, .contentTypeKey]
+        let resourceKeys: [URLResourceKey] = [.nameKey, .fileSizeKey, .isDirectoryKey, .contentModificationDateKey, .creationDateKey, .contentTypeKey]
         
         // Run on background thread to avoid blocking even for local files
         return try await Task.detached(priority: .userInitiated) {
@@ -46,6 +46,7 @@ class LocalFileService: FileService {
                     let size = Int64(resourceValues.fileSize ?? 0)
                     let isDirectory = resourceValues.isDirectory ?? false
                     let modificationDate = resourceValues.contentModificationDate ?? Date()
+                    let creationDate = resourceValues.creationDate ?? Date()
                     
                     let type: FileType
                     if isDirectory {
@@ -67,7 +68,8 @@ class LocalFileService: FileService {
                         path: url.path,
                         size: size,
                         type: type,
-                        modificationDate: modificationDate
+                        modificationDate: modificationDate,
+                        creationDate: creationDate
                     )
                 } catch {
                     print("DEBUG: Failed to get resource values for \(url.path): \(error)")
@@ -91,5 +93,10 @@ class LocalFileService: FileService {
         let destURL = URL(fileURLWithPath: path).appendingPathComponent(localURL.lastPathComponent)
         try fileManager.copyItem(at: localURL, to: destURL)
         progress(1.0, "Completed")
+    }
+    
+    func deleteItem(at path: String) async throws {
+        let url = URL(fileURLWithPath: path)
+        try fileManager.removeItem(at: url)
     }
 }

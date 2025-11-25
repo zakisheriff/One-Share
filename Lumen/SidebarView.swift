@@ -12,21 +12,12 @@ struct SidebarView: View {
     
     var body: some View {
         List(selection: $selectedCategory) {
-            Section(header: Text("Devices")) {
-                Label("Mac", systemImage: "desktopcomputer")
-                    .tag("local")
-                Label("Android", systemImage: "phone.fill")
-                    .tag("remote")
-            }
-            
-            Section(header: Text("Favorites")) {
-                Label("Downloads", systemImage: "arrow.down.circle")
-                    .tag("downloads")
-                Label("Documents", systemImage: "doc")
-                    .tag("documents")
-                Label("Pictures", systemImage: "photo")
-                    .tag("pictures")
-            }
+            Label("Split Screen", systemImage: "square.split.2x1")
+                .tag("split")
+            Label("Mac", systemImage: "desktopcomputer")
+                .tag("mac")
+            Label("Android", systemImage: "phone.fill")
+                .tag("android")
         }
         .listStyle(SidebarListStyle())
         .frame(minWidth: 200)

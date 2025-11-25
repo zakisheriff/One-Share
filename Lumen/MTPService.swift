@@ -20,6 +20,11 @@ class MTPService: FileService {
     private var listingCache: [String: CacheEntry] = [:]
     private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
     
+    // Device monitoring
+    private var deviceMonitoringTimer: Timer?
+    private var lastConnectionState: Bool = false
+    var onDeviceConnectionChange: ((Bool) -> Void)?
+    
     init() {
         log("MTPService init")
         queue.async {
@@ -27,6 +32,9 @@ class MTPService: FileService {
             let success = mtp_connect()
             self.log("Initial connection result: \(success)")
         }
+        
+        // Start monitoring for device connections
+        startDeviceMonitoring()
     }
     
     private func log(_ message: String) {
@@ -46,6 +54,7 @@ class MTPService: FileService {
     }
     
     deinit {
+        stopDeviceMonitoring()
         // We can't easily dispatch in deinit, but we should try to clean up.
         // Since queue holds self strongly in blocks, deinit only happens when no blocks are pending?
         // Actually, deinit is tricky with async.
@@ -54,6 +63,45 @@ class MTPService: FileService {
         mtp_disconnect()
     }
     
+    // Device monitoring functions
+    private func startDeviceMonitoring() {
+        deviceMonitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            self.checkDeviceConnection()
+        }
+    }
+    
+    private func stopDeviceMonitoring() {
+        deviceMonitoringTimer?.invalidate()
+        deviceMonitoringTimer = nil
+    }
+    
+    private func checkDeviceConnection() {
+        queue.async {
+            let isConnected = mtp_is_connected()
+            
+            // If connection state changed, notify
+            if isConnected != self.lastConnectionState {
+                self.lastConnectionState = isConnected
+                DispatchQueue.main.async {
+                    self.onDeviceConnectionChange?(isConnected)
+                }
+            }
+            
+            // If we're connected but our cache is empty, try to refresh
+            if isConnected && self.listingCache.isEmpty {
+                // Force a refresh when device is first detected
+                self.listingCache.removeAll()
+            }
+        }
+    }
+    
+    // Public method to clear cache
+    func clearCache() {
+        queue.async {
+            self.listingCache.removeAll()
+        }
+    }
+
     private func parsePath(_ path: String) -> (UInt32, UInt32) {
         // Format: mtp://storageId/parentId/childId/...
         // We only care about the LAST component for the file/folder ID.
@@ -84,6 +132,28 @@ class MTPService: FileService {
         }
         
         return (storageId, 0xFFFFFFFF)
+    }
+    
+    private func getFileType(for fileName: String, isFolder: Bool) -> FileType {
+        if isFolder {
+            return .folder
+        }
+        
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        switch ext {
+        case "jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp":
+            return .image
+        case "mp4", "mov", "avi", "mkv", "wmv", "flv", "webm":
+            return .video
+        case "mp3", "wav", "aac", "flac", "ogg", "m4a":
+            return .audio
+        case "pdf", "doc", "docx", "txt", "rtf", "pages", "epub":
+            return .document
+        case "zip", "rar", "7z", "tar", "gz":
+            return .archive
+        default:
+            return .file
+        }
     }
     
     func listItems(at path: String) async throws -> [FileSystemItem] {
@@ -127,13 +197,17 @@ class MTPService: FileService {
                             }
                         }
                         
+                        // Determine file type based on extension
+                        let fileType = self.getFileType(for: nameStr, isFolder: file.is_folder)
+                        
                         // Construct hierarchical path: currentPath + "/" + fileID
                         // Ensure no double slashes
                         let separator = path.hasSuffix("/") ? "" : "/"
                         let itemPath = "\(path)\(separator)\(file.id)"
                         
                         let finalPath: String
-                        if path == "mtp://" || path == "mtp://" { // Handle root
+                        // Only use the simple storageId/fileId format for actual root paths
+                        if path == "mtp://" || path == "/" || path.isEmpty { // Handle root
                              finalPath = "mtp://\(file.storage_id)/\(file.id)"
                         } else {
                              finalPath = itemPath
@@ -143,8 +217,9 @@ class MTPService: FileService {
                             name: nameStr,
                             path: finalPath,
                             size: Int64(file.size),
-                            type: file.is_folder ? .folder : .file,
-                            modificationDate: Date()
+                            type: fileType, // Use the determined file type instead of always .file
+                            modificationDate: Date(),
+                            creationDate: Date() // MTP doesn't provide creation date, so we use current date
                         )
                         items.append(item)
                     }
@@ -229,6 +304,27 @@ class MTPService: FileService {
                 let ret = mtp_upload_file(localURL.path, storageId, parentId, filename, fileSize, callback, contextPtr)
                 
                 Unmanaged<ProgressContext>.fromOpaque(contextPtr).release()
+                
+                if ret == 0 {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: nil))
+                }
+            }
+        }
+    }
+    
+    func deleteItem(at path: String) async throws {
+        let (_, fileId) = parsePath(path)
+        
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            queue.async {
+                guard mtp_connect() else {
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Device not connected"]))
+                    return
+                }
+                
+                let ret = mtp_delete_file(fileId)
                 
                 if ret == 0 {
                     continuation.resume()

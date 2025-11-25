@@ -11,6 +11,7 @@ protocol FileService {
     func listItems(at path: String) async throws -> [FileSystemItem]
     func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws
     func uploadFile(from localURL: URL, to path: String, progress: @escaping (Double, String) -> Void) async throws
+    func deleteItem(at path: String) async throws
 }
 
 class MockFileService: FileService {
@@ -36,5 +37,11 @@ class MockFileService: FileService {
         progress(0.5, "Uploading...")
         try await Task.sleep(nanoseconds: 1_000_000_000)
         progress(1.0, "Done")
+    }
+    
+    func deleteItem(at path: String) async throws {
+        print("Mock delete item at \(path)")
+        // Simulate some work
+        try await Task.sleep(nanoseconds: 500_000_000)
     }
 }

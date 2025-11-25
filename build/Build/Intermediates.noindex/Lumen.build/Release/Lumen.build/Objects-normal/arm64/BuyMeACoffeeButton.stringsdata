@@ -1,0 +1,24 @@
+{
+  "source": "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/BuyMeACoffeeButton.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Support the developer with a coffee",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Buy Me a Coffee",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 15
+        }
+      }
+    ]
+  },
+  "version": 1
+}

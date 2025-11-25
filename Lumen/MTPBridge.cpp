@@ -189,3 +189,13 @@ int mtp_upload_file(const char* source_path, uint32_t storage_id, uint32_t paren
     LIBMTP_destroy_file_t(newfile);
     return ret;
 }
+
+int mtp_delete_file(uint32_t file_id) {
+    if (!device) return -1;
+    
+    int ret = LIBMTP_Delete_Object(device, file_id);
+    return ret;
+}
+
+#ifdef __cplusplus
+#endif

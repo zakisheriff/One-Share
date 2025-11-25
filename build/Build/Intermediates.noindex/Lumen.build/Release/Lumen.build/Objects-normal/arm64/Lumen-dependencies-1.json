@@ -495,7 +495,7 @@
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/17\/include\/module.modulemap",
     "clangModulePath" : "\/Users\/afraasheriff\/Desktop\/Projects_List\/Lumen\/build\/ModuleCache.noindex\/_Builtin_stdbool-23U2H2BLHMADL6XRUIM3WNTMH.pcm",
-    "isBridgingHeaderDependency" : false,
+    "isBridgingHeaderDependency" : true,
     "isFramework" : false,
     "moduleName" : "_Builtin_stdbool"
   },
@@ -509,7 +509,7 @@
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Toolchains\/XcodeDefault.xctoolchain\/usr\/lib\/clang\/17\/include\/module.modulemap",
     "clangModulePath" : "\/Users\/afraasheriff\/Desktop\/Projects_List\/Lumen\/build\/ModuleCache.noindex\/_Builtin_stdint-C6WCRD0CUX24PFSRC3M5EPQ9E.pcm",
-    "isBridgingHeaderDependency" : false,
+    "isBridgingHeaderDependency" : true,
     "isFramework" : false,
     "moduleName" : "_Builtin_stdint"
   },
@@ -530,7 +530,7 @@
   {
     "clangModuleMapPath" : "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX.sdk\/usr\/include\/DarwinFoundation2.modulemap",
     "clangModulePath" : "\/Users\/afraasheriff\/Desktop\/Projects_List\/Lumen\/build\/ModuleCache.noindex\/_DarwinFoundation2-ADG3IEQUUEFUAKM482K8DEX57.pcm",
-    "isBridgingHeaderDependency" : false,
+    "isBridgingHeaderDependency" : true,
     "isFramework" : false,
     "moduleName" : "_DarwinFoundation2"
   },

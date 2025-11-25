@@ -1,0 +1,68 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildOnly"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "cdd7cc893bda7c3f91f1257061c48c275d9a1c3b2580640f6fdee3d8e68a9d0d"
+    }
+  ],
+  "containerPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "activeArchitecture" : "arm64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "platform" : "macosx",
+      "sdk" : "macosx26.1",
+      "sdkVariant" : "macos",
+      "supportedArchitectures" : [
+        "arm64e",
+        "arm64",
+        "x86_64"
+      ],
+      "targetArchitecture" : "arm64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Products",
+      "derivedDataPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build",
+      "indexDataStoreFolderPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Release",
+    "overrides" : {
+      "commandLine" : {
+        "table" : {
+
+        }
+      },
+      "synthesized" : {
+        "table" : {
+          "ACTION" : "build",
+          "CLANG_COVERAGE_MAPPING" : "YES",
+          "CLANG_PROFILE_DATA_DIRECTORY" : "/Users/afraasheriff/Desktop/Projects_List/Lumen/build/Build/ProfileData",
+          "COLOR_DIAGNOSTICS" : "YES",
+          "diagnostic_message_length" : "35",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "YES",
+          "ONLY_ACTIVE_ARCH" : "YES"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "launch",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}

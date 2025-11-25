@@ -6,11 +6,27 @@
 	<dict>
 		<key>Resources/AppIcon.icns</key>
 		<data>
-		DUberCr1HAtbVxtO0PJy4X84rM8=
+		GUvqiCUbA5KrUMMJREiQk05xUuE=
 		</data>
 		<key>Resources/Assets.car</key>
 		<data>
-		VVsVzASdrgdtut0XoG6r/JCCX5g=
+		NqLPThfoXmw7MHD5qUENty92q0Q=
+		</data>
+		<key>Resources/ExportOptions.plist</key>
+		<data>
+		1Th/E4Bdsc+wQ9gkaPr3O5Q6lb0=
+		</data>
+		<key>Resources/build_debug_final.log</key>
+		<data>
+		54lLr08e9b/+HOylD0anCZ3lRWQ=
+		</data>
+		<key>Resources/build_dmg.sh</key>
+		<data>
+		TvSkF6Q78g3zIqSkp/1RZzp7r+Q=
+		</data>
+		<key>Resources/build_optimization.log</key>
+		<data>
+		9NtNgUi6nP+LYmpNcgdz0GudyIU=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -19,14 +35,42 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hqWv/r/cADMuSlNrZQEQYZt3OSOrQWMeCKm/cf9mIIs=
+			xn79+666HCkGw7DudIseBNkgWIT//AAOt+5NPhCft4I=
 			</data>
 		</dict>
 		<key>Resources/Assets.car</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			IzynMXZNt+5R9slNiMoIjUYBvgUa+otYTZlxZx9G3/c=
+			4UVC0Dgc3/pn2MkbjGBPGQRpDTMxYxsg/39tvyFZaFA=
+			</data>
+		</dict>
+		<key>Resources/ExportOptions.plist</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Nd5ErMDsXsrdZFYIf98rnIslMtvDM1b4Qd800uc6Vtc=
+			</data>
+		</dict>
+		<key>Resources/build_debug_final.log</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			AljVfSMaRfaHAcVpUC/atLfTzMJ5tPGIQqJxbE/aD1c=
+			</data>
+		</dict>
+		<key>Resources/build_dmg.sh</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			jsAX+nwS7p1p3ct1EqDhKNELjbOmhzzbpgz5KRocEtI=
+			</data>
+		</dict>
+		<key>Resources/build_optimization.log</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			YbA9rX2N7daAS1unQSgqhtAVJsGtZPAOZyTqDYSV6vg=
 			</data>
 		</dict>
 	</dict>

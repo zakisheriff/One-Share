@@ -4,7 +4,10 @@ struct HoverEffect: ViewModifier {
     @State private var hovering = false
     func body(content: Content) -> some View {
         content
-            .scaleEffect(hovering ? 1.08 : 1.0)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(hovering ? Color.gray.opacity(0.2) : Color.clear)
+            )
             .animation(.easeInOut(duration: 0.15), value: hovering)
             .onHover { inside in
                 hovering = inside

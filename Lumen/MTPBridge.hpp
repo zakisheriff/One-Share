@@ -44,6 +44,7 @@ void mtp_free_files(MTPFileInfo* files);
 // Returns 0 on success, non-zero on error
 int mtp_download_file(uint32_t file_id, const char* dest_path, MTPProgressCallback callback, const void* context);
 int mtp_upload_file(const char* source_path, uint32_t storage_id, uint32_t parent_id, const char* filename, uint64_t size, MTPProgressCallback callback, const void* context);
+int mtp_delete_file(uint32_t file_id);
 
 #ifdef __cplusplus
 }

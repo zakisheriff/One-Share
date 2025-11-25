@@ -7,15 +7,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
-
-enum SortOption: String, CaseIterable, Identifiable {
-    case name = "Name"
-    case date = "Date"
-    case size = "Size"
-    case kind = "Kind"
-    
-    var id: String { self.rawValue }
-}
+import AppKit
 
 struct FileBrowserView: View {
     let title: String
@@ -26,13 +18,72 @@ struct FileBrowserView: View {
     @State private var selection = Set<UUID>()
     @State private var errorMessage: String?
     
-    @State private var isLoading = false
-    
     // Finder Features State
     @State private var searchText = ""
-    @State private var sortOption: SortOption = .name
+    @State private var sortOption: ExtendedSortOption = .name
+    @State private var sortOrder: SortOrder = .ascending
     @State private var isGridView = false
     @State private var iconSize: CGFloat = 64
+    
+    // Navigation history
+    @State private var navigationHistory: [String] = []
+    @State private var currentHistoryIndex: Int = -1
+    @State private var homePath: String = ""
+    
+    // Auto-refresh state
+    @State private var isAutoRefreshing: Bool = false
+    
+    // Computed properties for path display and navigation
+    private var canNavigateUp: Bool {
+        // For local files, enable up button if not at root
+        if !currentPath.hasPrefix("mtp://") {
+            return currentPath != "/"
+        }
+        
+        // For MTP, enable up button if we're not at the storage root
+        // Format: mtp://storageId/fileId or deeper
+        let cleanPath = currentPath.replacingOccurrences(of: "mtp://", with: "")
+        let components = cleanPath.split(separator: "/")
+        return components.count > 1
+    }
+    
+    private var canNavigateBack: Bool {
+        return currentHistoryIndex > 0
+    }
+    
+    private var canNavigateForward: Bool {
+        return currentHistoryIndex < navigationHistory.count - 1
+    }
+    
+    private func displayPath(_ path: String) -> String {
+        // For local files, return the path as is
+        if !path.hasPrefix("mtp://") {
+            return path
+        }
+        
+        // For MTP paths, show a more user-friendly representation
+        // Instead of showing the full path with IDs, show the title and indicate it's an Android device
+        if path == "mtp://" || path.isEmpty || path == "/" {
+            return "Android Device"
+        }
+        
+        // For deeper paths, show the navigation trail
+        let cleanPath = path.replacingOccurrences(of: "mtp://", with: "")
+        let components = cleanPath.split(separator: "/")
+        if components.count <= 1 {
+            return "Android Device"
+        }
+        
+        // Show breadcrumbs: Android Device > Folder1 > Folder2
+        var breadcrumbs = ["Android Device"]
+        // In the future, we could maintain a navigation history to show actual folder names
+        // For now, just show the depth level
+        if components.count > 1 {
+            breadcrumbs.append(contentsOf: Array(repeating: "Folder", count: components.count - 1))
+        }
+        
+        return breadcrumbs.joined(separator: " > ")
+    }
     
     var filteredAndSortedItems: [FileSystemItem] {
         var result = items
@@ -46,13 +97,32 @@ struct FileBrowserView: View {
         result.sort { lhs, rhs in
             switch sortOption {
             case .name:
-                return lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
-            case .date:
-                return lhs.modificationDate > rhs.modificationDate
-            case .size:
-                return lhs.size > rhs.size
+                let comparison = lhs.name.localizedStandardCompare(rhs.name)
+                return sortOrder == .ascending ? comparison == .orderedAscending : comparison == .orderedDescending
             case .kind:
-                return lhs.type.rawValue < rhs.type.rawValue
+                if sortOrder == .ascending {
+                    return lhs.type.rawValue < rhs.type.rawValue
+                } else {
+                    return lhs.type.rawValue > rhs.type.rawValue
+                }
+            case .dateModified:
+                if sortOrder == .ascending {
+                    return lhs.modificationDate < rhs.modificationDate
+                } else {
+                    return lhs.modificationDate > rhs.modificationDate
+                }
+            case .dateCreated:
+                if sortOrder == .ascending {
+                    return lhs.creationDate < rhs.creationDate
+                } else {
+                    return lhs.creationDate > rhs.creationDate
+                }
+            case .size:
+                if sortOrder == .ascending {
+                    return lhs.size < rhs.size
+                } else {
+                    return lhs.size > rhs.size
+                }
             }
         }
         
@@ -60,21 +130,29 @@ struct FileBrowserView: View {
     }
     
     private func loadItems() {
-        isLoading = true
+        // Set home path if not already set
+        if homePath.isEmpty {
+            homePath = currentPath
+        }
+        
         errorMessage = nil
         
         Task {
             do {
+                // For MTP services, try to force a fresh connection
+                if let mtpService = fileService as? MTPService {
+                    // Clear cache to force fresh connection
+                    mtpService.clearCache()
+                }
+                
                 let newItems = try await fileService.listItems(at: currentPath)
                 await MainActor.run {
                     self.items = newItems
-                    self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
                     self.errorMessage = "Error loading files: \(error.localizedDescription)"
                     self.items = []
-                    self.isLoading = false
                 }
             }
         }
@@ -82,6 +160,8 @@ struct FileBrowserView: View {
     
     private func navigate(to item: FileSystemItem) {
         if item.isDirectory {
+            // Add current path to history before navigating
+            addToHistory(currentPath)
             currentPath = item.path
             loadItems()
         }
@@ -89,230 +169,454 @@ struct FileBrowserView: View {
     
     private func navigateUp() {
         if currentPath.hasPrefix("mtp://") {
-            // MTP Navigation
-            // Format: mtp://storageId/parentId
-            // If parentId is root, go to mtp://
-            
-            let components = currentPath.replacingOccurrences(of: "mtp://", with: "").split(separator: "/")
-            if components.count > 1 {
-                // We are deep in structure. Go up one level.
-                // But wait, MTP paths are ID based, not hierarchical in the string necessarily if we just append IDs.
-                // Actually, in MTPService I constructed path as "mtp://storageId/fileId".
-                // But `fileId` is the ID of the folder we are IN.
-                // To go up, we need the parent ID of the current folder.
-                // My current path structure "mtp://storageId/currentFolderId" doesn't encode the parent chain.
-                // This is a problem with ID-based navigation if we don't store the stack or parent info.
-                
-                // However, `FileSystemItem` has `parentId`? No, it has `path`.
-                // If I want to support "Up", I need to know the parent.
-                // MTP `GetObjectInfo` gives parent ID.
-                // But `FileBrowserView` only has the path string.
-                
-                // Option 1: Store path as full hierarchy "mtp://storage/rootId/folderId/subfolderId".
-                // Option 2: Fetch parent ID from service when navigating up.
-                // Option 3: Maintain a navigation stack in `FileBrowserView`.
-                
-                // Given `FileBrowserView` is generic, Option 1 is best if possible, but MTP IDs are unique, so hierarchy string is redundant but useful for "Up".
-                // BUT, `MTPService` constructs the path.
-                // If I change `MTPService` to build full paths, it might be complex.
-                
-                // Let's use a simpler approach for now:
-                // If we are at "mtp://...", we can try to pop the last component if we treat it as a stack.
-                // But `MTPService` only returns `mtp://storage/id`. It doesn't return the full chain.
-                // So `navigateUp` is broken for MTP unless I fix `MTPService` or `FileBrowserView`.
-                
-                // Let's assume for now we just go back to root if we can't determine parent, OR we implement a stack.
-                // Implementing a stack in `FileBrowserView` is a good UI pattern anyway.
-                // But `FileBrowserView` is stateless regarding history currently (except `currentPath`).
-                
-                // Let's try to parse "mtp://" generic logic.
-                // If I can't easily go up, I'll disable the button or just go to root.
-                // For a robust solution, I should query the service for the parent.
-                // But `FileService` protocol doesn't have `getParent(path)`.
-                
-                // Hack: For this task, I will just strip the last component.
-                // If `MTPService` produces `mtp://storage/folderA/folderB`, then stripping works.
-                // I need to ensure `MTPService` produces hierarchical paths.
-                // Currently `MTPService` produces `mtp://storage/id`. This is NOT hierarchical.
-                // It implies flat access by ID.
-                
-                // I will modify `MTPService` to try to support hierarchical paths if I can, OR
-                // I will modify `FileBrowserView` to treat `mtp://` specially and maybe just go to root for now,
-                // OR better, I'll add `parentPath` to `FileSystemItem`? No, `FileSystemItem` is fixed.
-                
-                // Let's look at `MTPService.swift` again.
-                // It parses `mtp://storage/id`.
-                // If I navigate to a folder, `MTPService` lists files in that folder.
-                // The items returned have path `mtp://storage/childId`.
-                // If I click a child folder, path becomes `mtp://storage/childId`.
-                // The previous path was `mtp://storage/parentId`.
-                // We lost the parentId.
-                
-                // I should change `MTPService` to append the ID to the current path!
-                // `listItems(at path: String)` -> returns items.
-                // If input path is `mtp://storage/parentId`, the items should have path `mtp://storage/parentId/childId`.
-                // Then `navigateUp` works by stripping last component.
-                // And `parsePath` needs to take the *last* component as the ID.
-                
-                // This seems like the correct fix. I will update `MTPService` first, then `FileBrowserView` logic will work (mostly).
-                // `FileBrowserView` uses `URL` which handles `/` separation.
-                // So I just need to make sure `MTPService` returns hierarchical paths.
-                
-                // Wait, I am in `FileBrowserView` update step.
-                // I will update `FileBrowserView` to handle `mtp://` prefix for `URL` creation because `URL(fileURLWithPath:)` might prepend `file://`.
-                // `URL(string:)` should be used for `mtp://`.
-                
-                if let url = URL(string: currentPath), url.scheme == "mtp" {
-                     let parent = url.deletingLastPathComponent()
-                     if parent.absoluteString != currentPath {
-                         currentPath = parent.absoluteString
-                         // Handle trailing slash if needed
-                         if currentPath.hasSuffix("/") && currentPath != "mtp://" {
-                             currentPath = String(currentPath.dropLast())
-                         }
-                         loadItems()
-                     }
-                } else {
-                    // Local file system
-                    let url = URL(fileURLWithPath: currentPath)
-                    let parent = url.deletingLastPathComponent()
-                    if parent.path != currentPath {
-                        currentPath = parent.path
-                        loadItems()
-                    }
-                }
-            } else {
-                 // Local file system
-                let url = URL(fileURLWithPath: currentPath)
+            // MTP Navigation using URL for proper path manipulation
+            if let url = URL(string: currentPath) {
                 let parent = url.deletingLastPathComponent()
-                if parent.path != currentPath {
-                    currentPath = parent.path
+                // Make sure we don't go above the mtp:// level
+                if parent.absoluteString != "mtp:" && parent.absoluteString != "mtp:/" && parent.absoluteString != currentPath {
+                    // Add current path to history before navigating
+                    addToHistory(currentPath)
+                    currentPath = parent.absoluteString
+                    // Ensure path ends with / if needed
+                    if !currentPath.hasSuffix("/") && currentPath != "mtp://" {
+                        currentPath = currentPath + "/"
+                    }
+                    loadItems()
+                } else if parent.absoluteString == "mtp:" || parent.absoluteString == "mtp:/" {
+                    // Go back to root
+                    // Add current path to history before navigating
+                    addToHistory(currentPath)
+                    currentPath = "mtp://"
                     loadItems()
                 }
             }
+        } else {
+            // Local file system
+            let url = URL(fileURLWithPath: currentPath)
+            let parent = url.deletingLastPathComponent()
+            if parent.path != currentPath {
+                // Add current path to history before navigating
+                addToHistory(currentPath)
+                currentPath = parent.path
+                loadItems()
+            }
         }
+    }
+    
+    private func navigateHome() {
+        if !homePath.isEmpty && currentPath != homePath {
+            // Add current path to history before navigating
+            addToHistory(currentPath)
+            currentPath = homePath
+            loadItems()
+        }
+    }
+    
+    private func navigateBack() {
+        if canNavigateBack {
+            // Move back in history
+            currentHistoryIndex -= 1
+            currentPath = navigationHistory[currentHistoryIndex]
+            loadItems()
+        }
+    }
+    
+    private func navigateForward() {
+        if canNavigateForward {
+            // Move forward in history
+            currentHistoryIndex += 1
+            currentPath = navigationHistory[currentHistoryIndex]
+            loadItems()
+        }
+    }
+    
+    private func addToHistory(_ path: String) {
+        // Remove any forward history if we're not at the end
+        if currentHistoryIndex < navigationHistory.count - 1 {
+            navigationHistory.removeLast(navigationHistory.count - 1 - currentHistoryIndex)
+        }
+        
+        // Add the new path to history
+        navigationHistory.append(path)
+        currentHistoryIndex = navigationHistory.count - 1
+    }
+    
+    // Helper function to determine if the error is related to Android connectivity
+    private func isAndroidConnectionError(_ error: String) -> Bool {
+        return error.contains("Could not connect") ||
+        error.contains("Device not connected") ||
+        error.contains("MTP") ||
+        (currentPath.hasPrefix("mtp://") && items.isEmpty && error.contains("loading"))
+    }
+    
+    // Show file info sheet
+    private func showFileInfo(for item: FileSystemItem) {
+        selectedFileInfoItem = item
+        showingFileInfo = true
+    }
+    
+    // Duplicate a file
+    private func duplicateFile(_ item: FileSystemItem) {
+        // TODO: Implement file duplication
+        print("Duplicate file: \(item.name)")
+    }
+    
+    // Delete a file
+    private func deleteFile(_ item: FileSystemItem) {
+        itemToDelete = item
+        showingDeleteConfirmation = true
+    }
+    
+    // Perform the actual file deletion
+    private func performDelete(_ item: FileSystemItem) {
+        Task {
+            do {
+                try await fileService.deleteItem(at: item.path)
+                // Refresh the file list
+                await MainActor.run {
+                    loadItems()
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to delete file: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    // Handle double click on items
+    private func handleDoubleClick(on item: FileSystemItem) {
+        // For folders, navigate into them
+        if item.isDirectory {
+            navigate(to: item)
+            return
+        }
+        
+        // For media files, open them with the default application
+        switch item.type {
+        case .image, .video, .audio:
+            openFileWithDefaultApp(item)
+        default:
+            // For other file types, navigate (which will show an error for non-folders)
+            navigate(to: item)
+        }
+    }
+    
+    // Open a file with the default application
+    private func openFileWithDefaultApp(_ item: FileSystemItem) {
+#if DEBUG
+        print("Opening file with default app: \(item.path)")
+#endif
+        
+        if item.path.hasPrefix("mtp://") {
+            // For MTP files, we need to download them first
+            downloadAndOpenMTPFile(item)
+        } else {
+            // For local files, open directly
+            let url = URL(fileURLWithPath: item.path)
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    // Download an MTP file and open it
+    private func downloadAndOpenMTPFile(_ item: FileSystemItem) {
+        // TODO: Implement MTP file download and opening
+        print("Download and open MTP file: \(item.path)")
     }
     
     // Clipboard
     @Binding var clipboard: ClipboardItem?
     let onPaste: (String) -> Void // Callback when paste is triggered in this view
     
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header / Breadcrumbs & Toolbar
-            HStack {
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+    // State for file info sheet
+    @State private var showingFileInfo = false
+    @State private var selectedFileInfoItem: FileSystemItem?
+    
+    // State for delete confirmation
+    @State private var showingDeleteConfirmation = false
+    @State private var itemToDelete: FileSystemItem?
+    
+    // Computed property for the header/toolbar
+    private var headerView: some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            
+            Text(displayPath(currentPath))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            
+            Spacer()
+            
+            // Navigation Controls with Apple-like styling
+            HStack(spacing: 4) {
+                Button(action: navigateHome) {
+                    Image(systemName: "house")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.borderless)
+                .disabled(currentPath == homePath)
+                .help("Home")
                 
-                Text(currentPath)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                Button(action: navigateBack) {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.borderless)
+                .disabled(!canNavigateBack)
+                .help("Back")
                 
-                Spacer()
+                Button(action: navigateForward) {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.borderless)
+                .disabled(!canNavigateForward)
+                .help("Forward")
                 
-                ControlGroup {
-                    Button(action: navigateUp) {
-                        Image(systemName: "arrow.up")
-                    }
-                    .disabled(currentPath == "/")
+                Button(action: loadItems) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.borderless)
+                .help("Refresh")
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.separator, lineWidth: 0.5)
+            )
+            
+            // Search with Apple-like styling
+            TextField("Search", text: $searchText)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(.separator, lineWidth: 0.5)
+                )
+                .frame(width: 180)
+            
+            // Sort Menu
+            SortingView(
+                sortOption: $sortOption,
+                sortOrder: $sortOrder
+            )
+            
+            // Paste Button
+            if clipboard != nil {
+                Button(action: {
+                    onPaste(currentPath)
+                }) {
+                    Image(systemName: "doc.on.clipboard")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.borderless)
+                .help("Paste")
+            }
+            
+            // View Toggle with Apple-like styling
+            Picker("View", selection: $isGridView) {
+                Image(systemName: "list.bullet").tag(false)
+                Image(systemName: "square.grid.2x2").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 100)
+            .padding(4)
+            .background(.ultraThinMaterial)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.separator, lineWidth: 0.5)
+            )
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+    }
+    
+    // Computed property for the file content view
+    private var fileContentView: some View {
+        ScrollView {
+            // Error Message Display
+            if let errorMessage = errorMessage {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("⚠️ Error")
+                        .font(.headline)
+                        .foregroundColor(.red)
                     
-                    Button(action: loadItems) {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                }
-                
-                // Search
-                TextField("Search", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 150)
-                
-                // Sort Menu
-                Menu {
-                    Picker("Sort By", selection: $sortOption) {
-                        ForEach(SortOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
+                    Text(errorMessage)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    
+                    // Android-specific troubleshooting guidance
+                    if currentPath.hasPrefix("mtp://") && isAndroidConnectionError(errorMessage) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("📱 Android Device Connection Troubleshooting")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                            
+                            Text("1. Check USB Connection")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("• Ensure your Android device is properly connected via USB cable\n• Try a different USB cable or port")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            Text("2. Enable Developer Options & USB Debugging")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("• Go to Settings > About Phone/Tablet\n• Tap \"Build Number\" 7 times to enable Developer Options\n• Go back to Settings > Developer Options\n• Enable \"USB Debugging\"\n• On some devices: Enable \"USB debugging (Security settings)\"")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            Text("3. Allow Permission on Device")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("• Unlock your Android device\n• Look for a notification asking for permission\n• Tap the notification and select \"Allow\" or \"OK\"\n• Some devices may show a dialog box on the screen - tap \"Allow\"")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            Text("4. Close Conflicting Applications")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("• Close any other apps that might be accessing your device (e.g., Android File Transfer, Preview)\n• Restart this app after closing other apps")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            Text("5. Still Having Issues?")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("• Try disconnecting and reconnecting your device\n• Restart both your computer and Android device\n• Ensure you have the latest device drivers installed")
+                                .font(.body)
+                                .foregroundColor(.primary)
                         }
+                        .padding()
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(12)
                     }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
-                .menuStyle(.borderlessButton)
-                .frame(width: 30)
-                
-                // Paste Button
-                if clipboard != nil {
-                    Button(action: {
-                        onPaste(currentPath)
-                    }) {
-                        Image(systemName: "doc.on.clipboard")
+                    
+                    Button("Retry") {
+                        loadItems()
                     }
-                    .help("Paste")
                     .buttonStyle(.borderedProminent)
                 }
-                
-                // View Toggle
-                Picker("View", selection: $isGridView) {
-                    Image(systemName: "list.bullet").tag(false)
-                    Image(systemName: "square.grid.2x2").tag(true)
+                .padding()
+            } else if items.isEmpty && errorMessage == nil {
+                // Show loading or empty state
+                VStack {
+                    if currentPath.hasPrefix("mtp://") {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .scaleEffect(1.0)
+                                .frame(width: 30, height: 30)
+                            
+                            Text("Connecting to Android device...")
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Make sure your device is connected and USB debugging is enabled")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: 300)
+                        .padding()
+                    } else {
+                        Text("No items found")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 90)
-            }
-            .padding()
-            .background(.regularMaterial)
-            
-            if isLoading {
-                ProgressView("Loading...")
-                    .padding()
-            } else if let error = errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-                    .padding()
-            }
-            
-            // File Content
-            ScrollView {
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle()) // Make the whole area tappable
+                .onTapGesture {
+                    // Allow user to manually retry by clicking anywhere
+                    loadItems()
+                }
+            } else {
+                // File listing content
                 if isGridView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
                         ForEach(filteredAndSortedItems) { item in
                             VStack {
-    IconHelper.nativeIcon(for: item)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: iconSize, height: iconSize)
-        .shadow(radius: 4, y: 2)
-    
-    Text(item.name)
-        .font(.caption)
-        .lineLimit(2)
-        .multilineTextAlignment(.center)
-}
-.padding()
-.background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
-.cornerRadius(8)
-.hoverEffect()
-.onTapGesture(count: 2) {
-    navigate(to: item)
-}
-.onTapGesture {
-    if selection.contains(item.id) {
-        selection.remove(item.id)
-    } else {
-        selection = [item.id]
-    }
-}
-.contextMenu {
-    Button("Copy") {
-        clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-    }
-}
-.onDrag {
-    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-    return NSItemProvider(object: item.path as NSString)
-}
+                                IconHelper.nativeIcon(for: item)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: iconSize, height: iconSize)
+                                    .shadow(radius: 2, y: 1)
+                                
+                                Text(item.name)
+                                    .font(.caption)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.primary)
+                            }
+                            .padding(6)
+                            .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+                            .cornerRadius(12)
+                            .hoverEffect()
+                            .onTapGesture(count: 2) {
+                                handleDoubleClick(on: item)
+                            }
+                            .onTapGesture {
+                                if selection.contains(item.id) {
+                                    selection.remove(item.id)
+                                } else {
+                                    selection = [item.id]
+                                }
+                            }
+                            .contextMenu {
+                                Button("Copy") {
+                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                }
+                                
+                                // Add new context menu options
+                                Button("Move") {
+                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: true)
+                                }
+                                
+                                Button("Get Info") {
+                                    showFileInfo(for: item)
+                                }
+                                
+                                if !item.isDirectory {
+                                    Button("Duplicate") {
+                                        duplicateFile(item)
+                                    }
+                                }
+                                
+                                Button("Delete") {
+                                    deleteFile(item)
+                                }
+                            }
+                            .onDrag {
+                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                if !item.path.hasPrefix("mtp://") {
+                                    return NSItemProvider(contentsOf: URL(fileURLWithPath: item.path)) ?? NSItemProvider(object: item.path as NSString)
+                                }
+                                return NSItemProvider(object: item.path as NSString)
+                            }
                         }
                     }
                     .padding()
@@ -320,92 +624,145 @@ struct FileBrowserView: View {
                     LazyVStack(spacing: 0) {
                         ForEach(filteredAndSortedItems) { item in
                             HStack {
-    IconHelper.nativeIcon(for: item)
-        .resizable()
-        .aspectRatio(contentMode: .fit)
-        .frame(width: 24, height: 24)
-        .shadow(radius: 2, y: 1)
-    
-    VStack(alignment: .leading) {
-        Text(item.name)
-            .font(.body)
-            .lineLimit(1)
-    }
-    
-    Spacer()
-    
-    Text(item.formattedSize)
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
-        .frame(width: 70, alignment: .trailing)
-    
-    Text(item.formattedDate)
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
-        .frame(width: 120, alignment: .trailing)
-}
-.padding(.vertical, 4)
-.padding(.horizontal)
-.background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
-.contentShape(Rectangle())
-.hoverEffect()
-.onTapGesture(count: 2) {
-    navigate(to: item)
-}
-.onTapGesture {
-    selection = [item.id]
-}
-.contextMenu {
-    Button("Copy") {
-        clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-    }
-}
-.onDrag {
-    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-    return NSItemProvider(object: item.path as NSString)
-}
+                                IconHelper.nativeIcon(for: item)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 24, height: 24)
+                                    .shadow(radius: 1, y: 0.5)
+                                
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                        .font(.body)
+                                        .lineLimit(1)
+                                        .foregroundColor(.primary)
+                                }
+                                
+                                Spacer()
+                                
+                                Text(item.formattedSize)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 70, alignment: .trailing)
+                                
+                                Text(item.formattedDate)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 120, alignment: .trailing)
+                            }
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+                            .contentShape(Rectangle())
+                            .hoverEffect()
+                            .onTapGesture(count: 2) {
+                                handleDoubleClick(on: item)
+                            }
+                            .onTapGesture {
+                                selection = [item.id]
+                            }
+                            .contextMenu {
+                                Button("Copy") {
+                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                }
+                                
+                                // Add new context menu options
+                                Button("Move") {
+                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: true)
+                                }
+                                
+                                Button("Get Info") {
+                                    showFileInfo(for: item)
+                                }
+                                
+                                if !item.isDirectory {
+                                    Button("Duplicate") {
+                                        duplicateFile(item)
+                                    }
+                                }
+                                
+                                Button("Delete") {
+                                    deleteFile(item)
+                                }
+                            }
+                            .onDrag {
+                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+                                if !item.path.hasPrefix("mtp://") {
+                                    return NSItemProvider(contentsOf: URL(fileURLWithPath: item.path)) ?? NSItemProvider(object: item.path as NSString)
+                                }
+                                return NSItemProvider(object: item.path as NSString)
+                            }
                         }
                     }
                 }
             }
-            .background(.background) // Use system background
-            .onDrop(of: [.text], isTargeted: nil) { providers in
-                if clipboard != nil {
-                    onPaste(currentPath)
-                    return true
-                }
-                return false
+        }
+        .background(.background) // Use system background
+        .onDrop(of: [.text], isTargeted: nil) { providers in
+            if clipboard != nil {
+                onPaste(currentPath)
+                return true
             }
-            .contextMenu {
-                if clipboard != nil {
-                    Button("Paste") {
-                        onPaste(currentPath)
-                    }
+            return false
+        }
+        .contextMenu {
+            if clipboard != nil {
+                Button("Paste") {
+                    onPaste(currentPath)
                 }
             }
         }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            headerView
+            fileContentView
+        }
         .background(.thickMaterial) // Ensure material background for the whole view
-        .cornerRadius(12)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(.separator, lineWidth: 1) // Native separator color
         )
         .onAppear {
             loadItems()
+            
+            // Set up device connection monitoring for MTP services
+            if let mtpService = fileService as? MTPService {
+                mtpService.onDeviceConnectionChange = { isConnected in
+                    if isConnected && currentPath.hasPrefix("mtp://") {
+                        // Device connected, refresh the view
+                        DispatchQueue.main.async {
+                            // Clear cache and refresh
+                            loadItems()
+                        }
+                    } else if !isConnected && currentPath.hasPrefix("mtp://") && items.isEmpty {
+                        // Device disconnected, clear items and show connection message
+                        DispatchQueue.main.async {
+                            items = []
+                            errorMessage = nil
+                        }
+                    }
+                }
+            }
         }
+        .sheet(isPresented: $showingFileInfo) {
+            if let item = selectedFileInfoItem {
+                FileInfoView(item: item)
+            }
+        }
+        .alert("Delete File", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let item = itemToDelete {
+                    performDelete(item)
+                }
+            }
+        } message: {
+            if let item = itemToDelete {
+                Text("Are you sure you want to delete \(item.name)? This action cannot be undone.")
+            }
+        }
+        
     }
-}
-
-#Preview {
-    FileBrowserView(
-        title: "Local",
-        fileService: MockFileService(items: [
-            FileSystemItem(name: "Documents", path: "/Documents", size: 0, type: .folder, modificationDate: Date()),
-            FileSystemItem(name: "Photo.jpg", path: "/Photo.jpg", size: 1024 * 1024 * 2, type: .image, modificationDate: Date())
-        ]),
-        currentPath: "/Documents",
-        clipboard: .constant(nil),
-        onPaste: { _ in }
-    )
-    .padding()
 }

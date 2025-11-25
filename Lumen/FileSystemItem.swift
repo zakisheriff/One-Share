@@ -21,11 +21,11 @@ enum FileType: String, Codable {
         switch self {
         case .folder: return "folder.fill"
         case .file: return "doc"
-        case .image: return "photo"
-        case .video: return "film"
-        case .audio: return "waveform"
-        case .document: return "doc.text"
-        case .archive: return "archivebox"
+        case .image: return "photo.fill"
+        case .video: return "film.fill"
+        case .audio: return "waveform.circle.fill"
+        case .document: return "doc.text.fill"
+        case .archive: return "archivebox.fill"
         }
     }
 }
@@ -37,6 +37,8 @@ struct FileSystemItem: Identifiable, Hashable, Codable, Comparable {
     var size: Int64
     var type: FileType
     var modificationDate: Date
+    var creationDate: Date = Date() // Default to current date if not provided
+    
     var isDirectory: Bool {
         return type == .folder
     }

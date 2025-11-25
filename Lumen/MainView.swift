@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct MainView: View {
-    @State private var selectedCategory: String? = "local"
+    @State private var selectedCategory: String? = "split"
     @State private var clipboard: ClipboardItem?
     @StateObject private var transferManager = TransferManager()
     
@@ -22,30 +23,57 @@ struct MainView: View {
                 .background(.ultraThinMaterial) // Native sidebar material
         } detail: {
             ZStack {
-                HSplitView {
-                    // Mac Pane - Real File System
-                    FileBrowserView(
-                        title: "Mac",
-                        fileService: localService,
-                        currentPath: FileManager.default.homeDirectoryForCurrentUser.path,
-                        clipboard: $clipboard,
-                        onPaste: { destPath in
-                            transferManager.startTransfer(item: clipboard!, to: localService, at: destPath)
+                Group {
+                    if selectedCategory == "mac" {
+                        FileBrowserView(
+                            title: "Mac",
+                            fileService: localService,
+                            currentPath: FileManager.default.homeDirectoryForCurrentUser.path,
+                            clipboard: $clipboard,
+                            onPaste: { destPath in
+                                transferManager.startTransfer(item: clipboard!, to: localService, at: destPath)
+                            }
+                        )
+                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    } else if selectedCategory == "android" {
+                        FileBrowserView(
+                            title: "Android",
+                            fileService: remoteService,
+                            currentPath: "mtp://",
+                            clipboard: $clipboard,
+                            onPaste: { destPath in
+                                transferManager.startTransfer(item: clipboard!, to: remoteService, at: destPath)
+                            }
+                        )
+                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        // Split View
+                        HSplitView {
+                            // Mac Pane - Real File System
+                            FileBrowserView(
+                                title: "Mac",
+                                fileService: localService,
+                                currentPath: FileManager.default.homeDirectoryForCurrentUser.path,
+                                clipboard: $clipboard,
+                                onPaste: { destPath in
+                                    transferManager.startTransfer(item: clipboard!, to: localService, at: destPath)
+                                }
+                            )
+                            .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                            
+                            // Android Pane - Real MTP Connection
+                            FileBrowserView(
+                                title: "Android",
+                                fileService: remoteService,
+                                currentPath: "mtp://",
+                                clipboard: $clipboard,
+                                onPaste: { destPath in
+                                    transferManager.startTransfer(item: clipboard!, to: remoteService, at: destPath)
+                                }
+                            )
+                            .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
                         }
-                    )
-                    .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
-                    
-                    // Android Pane - Real MTP Connection
-                    FileBrowserView(
-                        title: "Android",
-                        fileService: remoteService,
-                        currentPath: "mtp://", // Root MTP path
-                        clipboard: $clipboard,
-                        onPaste: { destPath in
-                            transferManager.startTransfer(item: clipboard!, to: remoteService, at: destPath)
-                        }
-                    )
-                    .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
                 .padding()
                 
@@ -68,6 +96,23 @@ struct MainView: View {
             .background(.regularMaterial) // Main content glass effect
         }
         .frame(minWidth: 800, minHeight: 500)
+        .toolbar {
+            ToolbarItemGroup(placement: .automatic) {
+                // Buy Me a Coffee button in toolbar
+                BuyMeACoffeeButton {
+                    openCoffeePurchaseURL()
+                }
+            }
+        }
+    }
+    
+    private func openCoffeePurchaseURL() {
+        #if DEBUG
+        print("Opening Buy Me a Coffee URL...")
+        #endif
+        if let url = URL(string: "https://buymeacoffee.com/zakisherifw") {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
 

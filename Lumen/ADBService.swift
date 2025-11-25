@@ -37,7 +37,7 @@ class ADBService: FileService {
     }
     
     // Helper to run ADB command synchronously (called from background task)
-    nonisolated private func checkDeviceConnection() throws {
+    private func checkDeviceConnection() throws {
         let output = try runADBCommand(["devices"])
         let lines = output.components(separatedBy: .newlines)
         let hasDevice = lines.dropFirst().contains { line in
@@ -62,7 +62,7 @@ class ADBService: FileService {
         // Immediate feedback
         progress(0.0, "Starting download...")
         
-        try await Task.detached(priority: .userInitiated) {
+        let _ = try await Task.detached(priority: .userInitiated) {
             // Use -p flag for progress
             // adb pull -p <remote> <local>
             try self.runADBCommand(["pull", "-p", path, localURL.path]) { line in
@@ -88,7 +88,7 @@ class ADBService: FileService {
         // Immediate feedback
         progress(0.0, "Starting upload...")
         
-        try await Task.detached(priority: .userInitiated) {
+        let _ = try await Task.detached(priority: .userInitiated) {
             // Use -p flag for progress
             // adb push -p <local> <remote>
             try self.runADBCommand(["push", "-p", localURL.path, path]) { line in
@@ -101,7 +101,7 @@ class ADBService: FileService {
         }.value
     }
     
-    nonisolated private func parseProgress(from line: String) -> Double? {
+    private func parseProgress(from line: String) -> Double? {
         if let range = line.range(of: "\\[\\s*(\\d+)%\\]", options: .regularExpression) {
              let matchString = line[range].components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
              if let match = Double(matchString) {
@@ -112,12 +112,12 @@ class ADBService: FileService {
     }
     
     // Internal helper to handle both modes
-    nonisolated private func runADBCommand(_ arguments: [String]) throws -> String {
+    private func runADBCommand(_ arguments: [String]) throws -> String {
         return try runADBCommand(arguments, progressHandler: nil)
     }
 
     // Actual implementation
-    nonisolated private func runADBCommand(_ arguments: [String], progressHandler: ((String) -> Void)?) throws -> String {
+    private func runADBCommand(_ arguments: [String], progressHandler: ((String) -> Void)?) throws -> String {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: adbPath)
         task.arguments = arguments
@@ -168,7 +168,7 @@ class ADBService: FileService {
         return fullOutput
     }
     
-    nonisolated private func parseLSOutput(_ output: String, parentPath: String) -> [FileSystemItem] {
+    private func parseLSOutput(_ output: String, parentPath: String) -> [FileSystemItem] {
         var items: [FileSystemItem] = []
         let lines = output.components(separatedBy: .newlines)
         
@@ -299,5 +299,21 @@ class ADBService: FileService {
         }
         
         return items
+    }
+    
+    func deleteItem(at path: String) async throws {
+        let _ = try await Task.detached(priority: .userInitiated) {
+            // 1. Check if device is connected
+            try self.checkDeviceConnection()
+            
+            // 2. Construct command: adb shell "rm -r <path>"
+            let shellCmd = "rm -r '\(path)'"
+            
+            let output = try self.runADBCommand(["shell", shellCmd])
+            
+            // DEBUG: Log output to file
+            let debugLog = "Command: adb shell \(shellCmd)\nPath: \(path)\nOutput:\n\(output)\n"
+            try? debugLog.write(to: URL(fileURLWithPath: "/Users/afraasheriff/Desktop/lumen_debug_rm.txt"), atomically: true, encoding: .utf8)
+        }.value
     }
 }

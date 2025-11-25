@@ -1,0 +1,32 @@
+{
+  "source": "/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/BuyMeACoffeeExample.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Buy Me a Coffee Button Examples",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 7
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toolbar version:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "In toolbar context:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 31
+        }
+      }
+    ]
+  },
+  "version": 1
+}
