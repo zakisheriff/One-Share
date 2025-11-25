@@ -59,14 +59,20 @@ class ADBService: FileService {
     }
     
     func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws {
+        // Immediate feedback
+        progress(0.0, "Starting download...")
+        
         try await Task.detached(priority: .userInitiated) {
             // Start polling task for smooth progress
             let pollingTask = Task {
                 var lastSize: Int64 = 0
+                var fileFound = false
+                
                 while !Task.isCancelled {
                     if let attrs = try? FileManager.default.attributesOfItem(atPath: localURL.path),
                        let currentSize = attrs[.size] as? Int64 {
                         
+                        fileFound = true
                         if currentSize != lastSize {
                             let percent = size > 0 ? Double(currentSize) / Double(size) : 0.0
                             // Clamp to 0-1
@@ -77,6 +83,9 @@ class ADBService: FileService {
                             progress(clampedPercent, status)
                             lastSize = currentSize
                         }
+                    } else if !fileFound {
+                         // File not created yet by ADB
+                         progress(0.0, "Connecting to device...")
                     }
                     try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
                 }
@@ -95,13 +104,24 @@ class ADBService: FileService {
     }
     
     func uploadFile(from localURL: URL, to path: String, progress: @escaping (Double, String) -> Void) async throws {
+        // Immediate feedback
+        progress(0.0, "Starting upload...")
+        
         try await Task.detached(priority: .userInitiated) {
             // adb push <local> <remote>
             try self.runADBCommand(["push", localURL.path, path]) { line in
                 if let percent = self.parseProgress(from: line) {
                     progress(percent, line)
+                } else {
+                    // If we can't parse percent, just show the line (e.g. "pushing...")
+                    // But avoid spamming if it's not useful
+                    if !line.trimmingCharacters(in: .whitespaces).isEmpty {
+                        progress(0.0, line) // Keep 0% but show status
+                    }
                 }
             }
+            // Ensure 100% at end
+            progress(1.0, "Completed")
         }.value
     }
     
