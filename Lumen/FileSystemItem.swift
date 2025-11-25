@@ -30,7 +30,7 @@ enum FileType: String, Codable {
     }
 }
 
-struct FileSystemItem: Identifiable, Hashable, Codable, Comparable {
+struct FileSystemItem: Identifiable, Hashable, Codable, Comparable, Sendable {
     var id = UUID()
     var name: String
     var path: String

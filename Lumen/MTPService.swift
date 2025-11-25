@@ -6,6 +6,15 @@
 //
 
 import Foundation
+import Combine
+
+enum ConnectionState: String, Equatable {
+    case disconnected
+    case connecting
+    case connected
+    case connectedLocked // Connected but screen locked/no permission
+    case error
+}
 
 class MTPService: FileService {
     
@@ -21,14 +30,9 @@ class MTPService: FileService {
     private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
     
     // Device monitoring
-    enum ConnectionState {
-        case disconnected
-        case connectedLocked // Connected but no storage access (needs permission)
-        case connected // Connected and ready
-    }
+    @Published var connectionState: ConnectionState = .disconnected
     
     private var deviceMonitoringTimer: Timer?
-    private var lastConnectionState: ConnectionState = .disconnected
     var onDeviceConnectionChange: ((ConnectionState) -> Void)?
     
     init() {
@@ -90,14 +94,9 @@ class MTPService: FileService {
                 if mtp_check_storage() {
                     currentState = .connected
                 } else {
-                    // If we are locked, try to reconnect to see if permission was granted
-                    // This is "polling" for permission
-                    if self.lastConnectionState == .connectedLocked {
-                        if mtp_reconnect() && mtp_check_storage() {
-                            currentState = .connected
-                        } else {
-                            currentState = .connectedLocked
-                        }
+                    // Try to reconnect once if locked to see if it clears up
+                    if mtp_reconnect() && mtp_check_storage() {
+                        currentState = .connected
                     } else {
                         currentState = .connectedLocked
                     }
@@ -116,10 +115,10 @@ class MTPService: FileService {
             }
             
             // If connection state changed, notify
-            if currentState != self.lastConnectionState {
-                self.log("Connection state changed: \(self.lastConnectionState) -> \(currentState)")
-                self.lastConnectionState = currentState
+            if currentState != self.connectionState {
+                self.log("Connection state changed: \(self.connectionState) -> \(currentState)")
                 DispatchQueue.main.async {
+                    self.connectionState = currentState
                     self.onDeviceConnectionChange?(currentState)
                 }
             }
@@ -138,8 +137,8 @@ class MTPService: FileService {
             queue.async {
                 let success = mtp_reconnect()
                 if success && mtp_check_storage() {
-                    self.lastConnectionState = .connected
                     DispatchQueue.main.async {
+                        self.connectionState = .connected
                         self.onDeviceConnectionChange?(.connected)
                     }
                     continuation.resume(returning: true)

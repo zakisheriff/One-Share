@@ -1,0 +1,261 @@
+Found project in parent directory
+Building Archive...
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project Lumen.xcodeproj -scheme Lumen -configuration Release -archivePath ./build/Lumen.xcarchive archive ARCHS=arm64 HEADER_SEARCH_PATHS=/opt/homebrew/include LIBRARY_SEARCH_PATHS=/opt/homebrew/lib SWIFT_OBJC_BRIDGING_HEADER=Lumen/Lumen-Bridging-Header.h "OTHER_LDFLAGS=-L/opt/homebrew/lib -lmtp -lusb-1.0" CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+Build settings from command line:
+    ARCHS = arm64
+    CODE_SIGN_IDENTITY = -
+    CODE_SIGNING_ALLOWED = NO
+    CODE_SIGNING_REQUIRED = NO
+    HEADER_SEARCH_PATHS = /opt/homebrew/include
+    LIBRARY_SEARCH_PATHS = /opt/homebrew/lib
+    OTHER_LDFLAGS = -L/opt/homebrew/lib -lmtp -lusb-1.0
+    SWIFT_OBJC_BRIDGING_HEADER = Lumen/Lumen-Bridging-Header.h
+
+2025-11-25 18:29:55.065 xcodebuild[71070:904950] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, name:Any Mac }
+{ platform:macOS, arch:arm64, id:00006001-001231A626FA401E, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006001-001231A626FA401E, name:My Mac }
+note: Using codesigning identity override: -
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'Lumen' in project 'Lumen' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -x c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 3c90a75e207e39b77a1aa81cb1adc7e9
+Build description path: /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/XCBuildData/3c90a75e207e39b77a1aa81cb1adc7e9.xcbuilddata
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk /Users/afraasheriff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.1-25B74-3ae1261907bdadc328169391a47051a6.sdkstatcache
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -o /Users/afraasheriff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.1-25B74-3ae1261907bdadc328169391a47051a6.sdkstatcache
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/SwiftExplicitPrecompiledModules
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/ExplicitPrecompiledModules
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/EagerLinkingTBDs/Release
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/EagerLinkingTBDs/Release
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen-cdd7cc893bda7c3f91f1257061c48c27-VFS/all-product-headers.yaml
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen-cdd7cc893bda7c3f91f1257061c48c27-VFS/all-product-headers.yaml
+
+CreateBuildDirectory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen.xcodeproj
+    builtin-create-build-directory /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/empty-Lumen.plist (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/empty-Lumen.plist
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp
+-target arm64-apple-macos26.0 '-std=gnu++20' -fmodules -fno-cxx-modules -gmodules '-fmodules-cache-path=/Users/afraasheriff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex' -fpascal-strings -Os -fno-common -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -g '-fvisibility=hidden' -fvisibility-inlines-hidden -iquote /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-generated-files.hmap -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-own-target-headers.hmap -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-target-headers.hmap -iquote /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-project-headers.hmap -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release/include -I/opt/homebrew/include -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources-normal/arm64 -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/arm64 -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources -F/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-OutputFileMap.json (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.hmap
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.LinkFileList (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.LinkFileList
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen_const_extract_protocols.json (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.SwiftFileList (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.SwiftFileList
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.DependencyStaticMetadataFileList (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.SwiftConstValuesFileList (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-project-headers.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-project-headers.hmap
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.DependencyMetadataFileList (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-own-target-headers.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-generated-files.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-generated-files.hmap
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-target-headers.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-non-framework-target-headers.hmap (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    write-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-non-framework-target-headers.hmap
+
+SymLink /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release/Lumen.app ../../InstallationBuildProductsLocation/Applications/Lumen.app (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/ln -sfh ../../InstallationBuildProductsLocation/Applications/Lumen.app /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release/Lumen.app
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/MacOS (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/MacOS
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_log.txt /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_log.txt (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_log.txt /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_optimization.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_optimization.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_optimization.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_9.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_9.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_9.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_output/unthinned (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_output/unthinned
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_8.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_8.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_8.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_13.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_13.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_13.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+MkDir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_output/thinned (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /bin/mkdir -p /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_output/thinned
+
+GenerateAssetSymbols /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/Assets.xcassets (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/Assets.xcassets --compile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources --output-format human-readable-text --notices --warnings --export-dependency-info /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_dependencies --output-partial-info-plist /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.0 --platform macosx --bundle-identifier lumen.Lumen --generate-swift-asset-symbols /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_12.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_12.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_12.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_11.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_11.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_11.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_error_10.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_10.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_error_10.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_dmg.sh /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_dmg.sh (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_dmg.sh /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CpResource /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/build_debug_final.log /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_debug_final.log (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/build_debug_final.log /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources
+
+CopyPlistFile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources/ExportOptions.plist /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/ExportOptions.plist (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-copyPlist --outdir /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources -- /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/ExportOptions.plist
+
+CompileAssetCatalogVariant thinned /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/InstallationBuildProductsLocation/Applications/Lumen.app/Contents/Resources /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/Assets.xcassets (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/Assets.xcassets --compile /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.0 --platform macosx
+/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/MainView.swift:158:5: error: extraneous '}' at top level
+    }
+    ^
+    
+/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/MainView.swift:168:1: error: extraneous '}' at top level
+}
+^
+
+SwiftDriver Lumen normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Lumen' from project 'Lumen')
+    cd /Users/afraasheriff/Desktop/Projects_List/Lumen
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Lumen -O -whole-module-optimization -enforce-exclusivity\=checked @/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.SwiftFileList -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk -target arm64-apple-macos26.0 -g -module-cache-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release -F /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release -emit-localized-strings -emit-localized-strings-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64 -c -num-threads 10 -Xcc -ivfsstatcache -Xcc /Users/afraasheriff/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.1-25B74-3ae1261907bdadc328169391a47051a6.sdkstatcache -output-file-map /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/afraasheriff/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen_const_extract_protocols.json -Xcc -iquote -Xcc /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-generated-files.hmap -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-own-target-headers.hmap -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-all-target-headers.hmap -Xcc -iquote -Xcc /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Lumen-project-headers.hmap -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/BuildProductsPath/Release/include -Xcc -I/opt/homebrew/include -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources-normal/arm64 -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources/arm64 -Xcc -I/Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/afraasheriff/Library/Developer/Xcode/DerivedData/Lumen-alopeafjorucwmhfuymhyhjqofhs/Build/Intermediates.noindex/ArchiveIntermediates/Lumen/IntermediateBuildFilesPath/Lumen.build/Release/Lumen.build/Objects-normal/arm64/Lumen-Swift.h -import-objc-header /Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/Lumen-Bridging-Header.h -working-directory /Users/afraasheriff/Desktop/Projects_List/Lumen -no-emit-module-separately-wmo
+/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/MainView.swift:158:5: error: Extraneous '}' at top level
+    }
+    ^
+     (in target 'Lumen' from project 'Lumen')
+/Users/afraasheriff/Desktop/Projects_List/Lumen/Lumen/MainView.swift:168:1: error: Extraneous '}' at top level
+}
+^ (in target 'Lumen' from project 'Lumen')
+
+** ARCHIVE FAILED **
+
+
+The following build commands failed:
+	SwiftDriver Lumen normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Lumen' from project 'Lumen')
+	Archiving project Lumen with scheme Lumen
+(2 failures)

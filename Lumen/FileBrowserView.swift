@@ -36,7 +36,7 @@ struct FileBrowserView: View {
     
     // Auto-refresh state
     @State private var isAutoRefreshing: Bool = false
-    @State private var connectionState: MTPService.ConnectionState = .disconnected
+    @State private var connectionState: ConnectionState = .disconnected
     
     // Computed properties for path display and navigation
     private var canNavigateUp: Bool {
@@ -433,6 +433,17 @@ struct FileBrowserView: View {
                 .buttonStyle(.borderless)
                 .help("Paste")
             }
+            if connectionState == .disconnected || connectionState == .error {
+                Button(action: {
+                    if let mtpService = fileService as? MTPService {
+                        Task {
+                            _ = await mtpService.reconnect()
+                        }
+                    }
+                }) {
+                    Label("Reconnect Device", systemImage: "arrow.clockwise")
+                }
+            }
             
             // View Toggle with Apple-like styling
             Picker("View", selection: $isGridView) {
@@ -795,21 +806,26 @@ struct FileBrowserView: View {
             }
             
             let service = fileService
+            let isDir = item.isDirectory
+            let itemPath = item.path
+            let itemSize = item.size
+            let itemName = item.name
+            
             itemProvider.registerFileRepresentation(forTypeIdentifier: fileType, fileOptions: [], visibility: .all) { completionHandler in
                 _ = Task {
                     do {
                         let tempDir = FileManager.default.temporaryDirectory
-                        let tempURL = tempDir.appendingPathComponent(item.name)
+                        let tempURL = tempDir.appendingPathComponent(itemName)
                         
                         // Clean up existing temp file if needed
                         try? FileManager.default.removeItem(at: tempURL)
                         
                         if let mtpService = service as? MTPService {
-                            if item.isDirectory {
+                            if isDir {
                                 // Fix 2: Handle folder download recursively
-                                try await mtpService.downloadFolder(at: item.path, to: tempURL) { _, _ in }
+                                try await mtpService.downloadFolder(at: itemPath, to: tempURL) { _, _ in }
                             } else {
-                                try await mtpService.downloadFile(at: item.path, to: tempURL, size: item.size) { _, _ in }
+                                try await mtpService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { _, _ in }
                             }
                             // Completion handler expects: (URL?, Bool, Error?)
                             // Bool is 'coordinated'. We pass false for temp file.
@@ -870,6 +886,8 @@ struct FileBrowserView: View {
                                 items = []
                                 errorMessage = nil
                             }
+                        case .connecting, .error:
+                            break // No specific action needed
                         }
                     }
                 }
