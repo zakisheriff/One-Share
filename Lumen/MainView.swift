@@ -57,6 +57,8 @@ struct MainView: View {
                         filename: transferManager.filename,
                         progress: transferManager.progress,
                         status: transferManager.status,
+                        transferSpeed: transferManager.transferSpeed,
+                        timeRemaining: transferManager.timeRemaining,
                         onCancel: {
                             transferManager.cancel()
                         }

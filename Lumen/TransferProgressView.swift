@@ -11,6 +11,8 @@ struct TransferProgressView: View {
     let filename: String
     let progress: Double // 0.0 to 1.0
     let status: String
+    let transferSpeed: String
+    let timeRemaining: String
     let onCancel: () -> Void
     
     var body: some View {
@@ -29,6 +31,29 @@ struct TransferProgressView: View {
                     Text(status)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    
+                    // Speed and time remaining
+                    HStack(spacing: 8) {
+                        if !transferSpeed.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "speedometer")
+                                    .font(.caption2)
+                                Text(transferSpeed)
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                        
+                        if !timeRemaining.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.caption2)
+                                Text(timeRemaining)
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 
                 Spacer()
@@ -50,3 +75,4 @@ struct TransferProgressView: View {
         .shadow(radius: 10)
     }
 }
+

@@ -12,6 +12,14 @@ class MTPService: FileService {
     // Serial queue for thread safety with libmtp which is not thread-safe
     private let queue = DispatchQueue(label: "com.lumen.mtp.queue", qos: .userInitiated)
     
+    // Cache for folder listings
+    private struct CacheEntry {
+        let items: [FileSystemItem]
+        let timestamp: Date
+    }
+    private var listingCache: [String: CacheEntry] = [:]
+    private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
+    
     init() {
         log("MTPService init")
         queue.async {
@@ -82,6 +90,17 @@ class MTPService: FileService {
         let (storageId, parentId) = parsePath(path)
         log("listItems called for path: \(path) (Storage: \(storageId), Parent: \(parentId))")
         
+        // Check cache first
+        if let cached = listingCache[path] {
+            let age = Date().timeIntervalSince(cached.timestamp)
+            if age < cacheTimeout {
+                log("listItems: Returning cached result (\(cached.items.count) items, age: \(age)s)")
+                return cached.items
+            } else {
+                log("listItems: Cache expired (age: \(age)s)")
+            }
+        }
+        
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 self.log("listItems: queue block started")
@@ -132,6 +151,9 @@ class MTPService: FileService {
                     
                     mtp_free_files(files)
                 }
+                
+                // Cache the results
+                self.listingCache[path] = CacheEntry(items: items, timestamp: Date())
                 
                 self.log("listItems: Returning \(items.count) items")
                 continuation.resume(returning: items)

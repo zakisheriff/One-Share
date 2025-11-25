@@ -4,6 +4,7 @@
 #include <string.h>
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 // Global device pointer (simplified for single device support)
 static LIBMTP_mtpdevice_t *device = NULL;
@@ -121,12 +122,33 @@ void mtp_free_files(MTPFileInfo* files) {
 struct CallbackData {
     MTPProgressCallback callback;
     const void* context;
+    uint64_t lastReportedBytes;
+    std::chrono::steady_clock::time_point lastReportTime;
 };
 
 int progress_wrapper(uint64_t const sent, uint64_t const total, void const * const data) {
     CallbackData* cbData = (CallbackData*)data;
     if (cbData && cbData->callback) {
-        cbData->callback(sent, total, cbData->context);
+        // Throttle callbacks to reduce overhead
+        // Only report every 1MB or every 100ms, whichever comes first
+        auto now = std::chrono::steady_clock::now();
+        uint64_t bytesSinceLastReport = sent - cbData->lastReportedBytes;
+        auto timeSinceLastReport = std::chrono::duration_cast<std::chrono::milliseconds>(now - cbData->lastReportTime).count();
+        
+        const uint64_t MIN_BYTES_DELTA = 1024 * 1024; // 1 MB
+        const int64_t MIN_TIME_DELTA_MS = 100; // 100 ms
+        
+        // Always report first and last callback
+        bool shouldReport = (sent == 0) || 
+                           (sent == total) || 
+                           (bytesSinceLastReport >= MIN_BYTES_DELTA) || 
+                           (timeSinceLastReport >= MIN_TIME_DELTA_MS);
+        
+        if (shouldReport) {
+            cbData->callback(sent, total, cbData->context);
+            cbData->lastReportedBytes = sent;
+            cbData->lastReportTime = now;
+        }
     }
     return 0; // Return 0 to continue
 }
@@ -134,7 +156,7 @@ int progress_wrapper(uint64_t const sent, uint64_t const total, void const * con
 int mtp_download_file(uint32_t file_id, const char* dest_path, MTPProgressCallback callback, const void* context) {
     if (!device) return -1;
     
-    CallbackData cbData = { callback, context };
+    CallbackData cbData = { callback, context, 0, std::chrono::steady_clock::now() };
     
     int ret = LIBMTP_Get_File_To_File(device, file_id, dest_path, progress_wrapper, (void*)&cbData);
     return ret;
@@ -160,7 +182,7 @@ int mtp_upload_file(const char* source_path, uint32_t storage_id, uint32_t paren
     newfile->storage_id = storage_id;
     newfile->filetype = LIBMTP_FILETYPE_UNKNOWN; // Let libmtp guess or set generic
 
-    CallbackData cbData = { callback, context };
+    CallbackData cbData = { callback, context, 0, std::chrono::steady_clock::now() };
 
     int ret = LIBMTP_Send_File_From_File(device, source_path, newfile, progress_wrapper, (void*)&cbData);
     

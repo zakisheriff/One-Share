@@ -279,39 +279,40 @@ struct FileBrowserView: View {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
                         ForEach(filteredAndSortedItems) { item in
                             VStack {
-                                Image(systemName: item.type.iconName)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: iconSize, height: iconSize)
-                                    .foregroundStyle(item.type == .folder ? .blue : .secondary)
-                                
-                                Text(item.name)
-                                    .font(.caption)
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding()
-                            .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
-                            .cornerRadius(8)
-                            .onTapGesture(count: 2) {
-                                navigate(to: item)
-                            }
-                            .onTapGesture {
-                                if selection.contains(item.id) {
-                                    selection.remove(item.id)
-                                } else {
-                                    selection = [item.id]
-                                }
-                            }
-                            .contextMenu {
-                                Button("Copy") {
-                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-                                }
-                            }
-                            .onDrag {
-                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-                                return NSItemProvider(object: item.path as NSString)
-                            }
+    IconHelper.nativeIcon(for: item)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(width: iconSize, height: iconSize)
+        .shadow(radius: 4, y: 2)
+    
+    Text(item.name)
+        .font(.caption)
+        .lineLimit(2)
+        .multilineTextAlignment(.center)
+}
+.padding()
+.background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+.cornerRadius(8)
+.hoverEffect()
+.onTapGesture(count: 2) {
+    navigate(to: item)
+}
+.onTapGesture {
+    if selection.contains(item.id) {
+        selection.remove(item.id)
+    } else {
+        selection = [item.id]
+    }
+}
+.contextMenu {
+    Button("Copy") {
+        clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+    }
+}
+.onDrag {
+    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+    return NSItemProvider(object: item.path as NSString)
+}
                         }
                     }
                     .padding()
@@ -319,48 +320,50 @@ struct FileBrowserView: View {
                     LazyVStack(spacing: 0) {
                         ForEach(filteredAndSortedItems) { item in
                             HStack {
-                                Image(systemName: item.type.iconName)
-                                    .foregroundStyle(item.type == .folder ? .blue : .secondary)
-                                    .font(.title3)
-                                    .frame(width: 24)
-                                
-                                VStack(alignment: .leading) {
-                                    Text(item.name)
-                                        .font(.body)
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                Text(item.formattedSize)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 70, alignment: .trailing)
-                                
-                                Text(item.formattedDate)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 120, alignment: .trailing)
-                            }
-                            .padding(.vertical, 4)
-                            .padding(.horizontal)
-                            .background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear) // Native selection style
-                            .contentShape(Rectangle())
-                            .onTapGesture(count: 2) {
-                                navigate(to: item)
-                            }
-                            .onTapGesture {
-                                selection = [item.id]
-                            }
-                            .contextMenu {
-                                Button("Copy") {
-                                    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-                                }
-                            }
-                            .onDrag {
-                                clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
-                                return NSItemProvider(object: item.path as NSString)
-                            }
+    IconHelper.nativeIcon(for: item)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(width: 24, height: 24)
+        .shadow(radius: 2, y: 1)
+    
+    VStack(alignment: .leading) {
+        Text(item.name)
+            .font(.body)
+            .lineLimit(1)
+    }
+    
+    Spacer()
+    
+    Text(item.formattedSize)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .frame(width: 70, alignment: .trailing)
+    
+    Text(item.formattedDate)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .frame(width: 120, alignment: .trailing)
+}
+.padding(.vertical, 4)
+.padding(.horizontal)
+.background(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+.contentShape(Rectangle())
+.hoverEffect()
+.onTapGesture(count: 2) {
+    navigate(to: item)
+}
+.onTapGesture {
+    selection = [item.id]
+}
+.contextMenu {
+    Button("Copy") {
+        clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+    }
+}
+.onDrag {
+    clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+    return NSItemProvider(object: item.path as NSString)
+}
                         }
                     }
                 }
