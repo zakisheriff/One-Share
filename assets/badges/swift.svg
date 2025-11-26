@@ -1,5 +1,10 @@
-<svg width="150" height="50" viewBox="0 0 150 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="150" height="50" rx="14" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" style="backdrop-filter: blur(12px);"/>
-  <text x="50" y="32" font-size="18" fill="white" font-family="SF Pro Display">Swift 5.9</text>
-  <image href="https://upload.wikimedia.org/wikipedia/commons/9/9d/Swift_logo.svg" x="15" y="10" height="30" width="30"/>
+<svg width="160" height="50" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff8c53;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#f05138;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="50" rx="16" fill="url(#grad2)"/>
+  <text x="40" y="32" font-size="18" fill="#ffffff" font-family="SF Pro Display, Arial, sans-serif">Swift 5.9</text>
 </svg>

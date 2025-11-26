@@ -1,4 +1,10 @@
-<svg width="140" height="50" viewBox="0 0 140 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="140" height="50" rx="14" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" style="backdrop-filter: blur(12px);"/>
-  <text x="22" y="32" font-size="18" fill="white" font-family="SF Pro Display">MIT License</text>
+<svg width="140" height="50" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4c4c4c;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#2c2c2c;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  <rect width="140" height="50" rx="16" fill="url(#grad3)"/>
+  <text x="20" y="32" font-size="18" fill="#ffffff" font-family="SF Pro Display, Arial, sans-serif">MIT License</text>
 </svg>

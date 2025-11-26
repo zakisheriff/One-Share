@@ -1,6 +1,0 @@
-<svg width="210" height="50" viewBox="0 0 210 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="210" height="50" rx="14" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" style="backdrop-filter: blur(12px);"/>
-  <text x="50" y="32" font-size="18" fill="white" font-family="SF Pro Display">macOS Sequoia Ready</text>
-  <circle cx="25" cy="25" r="12" fill="white"/>
-  <text x="19" y="32" font-size="18" fill="black" font-family="Arial"></text>
-</svg>
