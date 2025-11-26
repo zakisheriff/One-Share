@@ -26,7 +26,7 @@ struct FileBrowserView: View {
     @State private var searchText = ""
     @State private var sortOption: ExtendedSortOption = .name
     @State private var sortOrder: SortOrder = .ascending
-    @State private var isGridView = false
+    @State private var isGridView = true
     @State private var iconSize: CGFloat = 64
     
     // Navigation history
@@ -433,17 +433,7 @@ struct FileBrowserView: View {
                 .buttonStyle(.borderless)
                 .help("Paste")
             }
-            if connectionState == .disconnected || connectionState == .error {
-                Button(action: {
-                    if let mtpService = fileService as? MTPService {
-                        Task {
-                            _ = await mtpService.reconnect()
-                        }
-                    }
-                }) {
-                    Label("Reconnect Device", systemImage: "arrow.clockwise")
-                }
-            }
+
             
             // View Toggle with Apple-like styling
             Picker("View", selection: $isGridView) {
@@ -496,13 +486,7 @@ struct FileBrowserView: View {
     
     private func errorView(errorMessage: String) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("⚠️ Error")
-                .font(.headline)
-                .foregroundColor(.red)
-            
-            Text(errorMessage)
-                .font(.body)
-                .foregroundColor(.primary)
+
             
             // Android-specific troubleshooting guidance
             if currentPath.hasPrefix("mtp://") && isAndroidConnectionError(errorMessage) {
@@ -513,59 +497,67 @@ struct FileBrowserView: View {
                 loadItems()
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var androidTroubleshootingView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("📱 Android Device Connection Troubleshooting")
-                .font(.headline)
-                .foregroundColor(.blue)
-            
-            Text("1. Check USB Connection")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("• Ensure your Android device is properly connected via USB cable\n• Try a different USB cable or port")
-                .font(.body)
-                .foregroundColor(.primary)
-            
-            Text("2. Enable Developer Options & USB Debugging")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("• Go to Settings > About Phone/Tablet\n• Tap \"Build Number\" 7 times to enable Developer Options\n• Go back to Settings > Developer Options\n• Enable \"USB Debugging\"\n• On some devices: Enable \"USB debugging (Security settings)\"")
-                .font(.body)
-                .foregroundColor(.primary)
-            
-            Text("3. Allow Permission on Device")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("• Unlock your Android device\n• Look for a notification asking for permission\n• Tap the notification and select \"Allow\" or \"OK\"\n• Some devices may show a dialog box on the screen - tap \"Allow\"")
-                .font(.body)
-                .foregroundColor(.primary)
-            
-            Text("4. Close Conflicting Applications")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("• Close any other apps that might be accessing your device (e.g., Android File Transfer, Preview)\n• Restart this app after closing other apps")
-                .font(.body)
-                .foregroundColor(.primary)
-            
-            Text("5. Still Having Issues?")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("• Try disconnecting and reconnecting your device\n• Restart both your computer and Android device\n• Ensure you have the latest device drivers installed")
-                .font(.body)
-                .foregroundColor(.primary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Android Connection Guide")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 4)
+                
+                Group {
+                    Text("Step 1: Mac Preparation (Crucial)")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• COMPLETELY QUIT these apps if they are running:\n  - Android File Transfer\n  - OpenMTP\n  - Preview\n  - Photos\n• These apps aggressively grab the USB connection and prevent Lumen from connecting.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 2: Android Setup")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Unlock your phone.\n• Swipe down from the top to see notifications.\n• Tap the 'Charging via USB' notification.\n• Select 'File Transfer' / 'MTP' mode.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 3: Advanced Debugging (If needed)")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Go to Settings > About Phone > Tap 'Build Number' 7 times.\n• Go to Settings > System > Developer Options.\n• Enable 'USB Debugging'.\n• If a popup appears on your phone asking to 'Allow USB debugging?', tap 'Allow'.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 4: Last Resort")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Unplug the USB cable and plug it back in.\n• Try a different USB port or cable.\n• Restart your Mac and Android device.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(Color.blue.opacity(0.05))
         .cornerRadius(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var emptyStateView: some View {
@@ -696,7 +688,7 @@ struct FileBrowserView: View {
             fileContextMenu(for: item)
         }
         .onDrag {
-            makeDragItem(for: item)
+            createItemProvider(for: item)
         }
     }
     
@@ -760,7 +752,7 @@ struct FileBrowserView: View {
             fileContextMenu(for: item)
         }
         .onDrag {
-            makeDragItem(for: item)
+            createItemProvider(for: item)
         }
     }
     
@@ -789,129 +781,130 @@ struct FileBrowserView: View {
         }
     }
     
-    private func makeDragItem(for item: FileSystemItem) -> NSItemProvider {
-        clipboard = ClipboardItem(item: item, sourceService: fileService, isCut: false)
+    private func createItemProvider(for item: FileSystemItem) -> NSItemProvider {
+        // Set clipboard for internal copy/paste
+        DispatchQueue.main.async {
+            self.clipboard = ClipboardItem(item: item, sourceService: self.fileService, isCut: false)
+        }
+        
         if item.path.hasPrefix("mtp://") {
             let itemProvider = NSItemProvider()
             
-            // Fix 1: Set the suggested name so Finder knows what to call it
-            itemProvider.suggestedName = item.name
+            // Fix: Set suggestedName without extension to prevent double extension
+            // Finder will append the correct extension based on the type identifier
+            let nameWithoutExtension = (item.name as NSString).deletingPathExtension
+            itemProvider.suggestedName = nameWithoutExtension
             
-            // Determine correct type identifier
-            let fileType: String
-            if item.isDirectory {
-                fileType = UTType.folder.identifier
+            // Determine type identifier
+            let typeIdentifier: String
+            if let type = UTType(filenameExtension: (item.name as NSString).pathExtension) {
+                typeIdentifier = type.identifier
             } else {
-                fileType = UTType(filenameExtension: (item.name as NSString).pathExtension)?.identifier ?? "public.data"
+                typeIdentifier = UTType.data.identifier
             }
             
-            let service = fileService
-            let isDir = item.isDirectory
-            let itemPath = item.path
-            let itemSize = item.size
-            let itemName = item.name
-            
-            itemProvider.registerFileRepresentation(forTypeIdentifier: fileType, fileOptions: [], visibility: .all) { completionHandler in
-                _ = Task {
+            // Register file representation
+            // This allows us to download the file on demand when the user drops it
+            itemProvider.registerFileRepresentation(forTypeIdentifier: typeIdentifier, visibility: .all, loadHandler: { completionHandler in
+                let progress = Progress(totalUnitCount: 100)
+                
+                Task {
                     do {
+                        // Create a temporary file URL
                         let tempDir = FileManager.default.temporaryDirectory
-                        let tempURL = tempDir.appendingPathComponent(itemName)
+                        let tempURL = tempDir.appendingPathComponent(item.name)
                         
-                        // Clean up existing temp file if needed
+                        // Remove existing file if any
                         try? FileManager.default.removeItem(at: tempURL)
                         
-                        if let mtpService = service as? MTPService {
-                            if isDir {
-                                // Fix 2: Handle folder download recursively
-                                try await mtpService.downloadFolder(at: itemPath, to: tempURL) { _, _ in }
-                            } else {
-                                try await mtpService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { _, _ in }
-                            }
-                            // Completion handler expects: (URL?, Bool, Error?)
-                            // Bool is 'coordinated'. We pass false for temp file.
-                            completionHandler(tempURL, false, nil)
-                        } else {
-                            completionHandler(nil, false, NSError(domain: "Lumen", code: 1, userInfo: [NSLocalizedDescriptionKey: "MTP Service unavailable"]))
+                        // Download the file
+                        // We capture fileService explicitly
+                        try await self.fileService.downloadFile(at: item.path, to: tempURL, size: item.size) { p, _ in
+                            progress.completedUnitCount = Int64(p * 100)
                         }
+                        
+                        // Call completion with the file URL
+                        // coordinated: false means we are not using FileCoordination (it's a temp file)
+                        completionHandler(tempURL, false, nil)
                     } catch {
+                        print("Error downloading file for drag: \(error)")
                         completionHandler(nil, false, error)
                     }
                 }
                 
-                // Return a Progress object if desired, or nil
-                return nil
-            }
+                return progress
+            })
             
             return itemProvider
         } else {
-            return NSItemProvider(contentsOf: URL(fileURLWithPath: item.path)) ?? NSItemProvider(object: item.path as NSString)
+            // Local file
+            return NSItemProvider(contentsOf: URL(fileURLWithPath: item.path)) ?? NSItemProvider()
         }
     }
-
     
     var body: some View {
-        VStack(spacing: 0) {
-            headerView
-            fileContentView
-        }
-        .background(.thickMaterial) // Ensure material background for the whole view
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(.separator, lineWidth: 1) // Native separator color
-        )
-        .onAppear {
-            loadItems()
-            
-            // Set up device connection monitoring for MTP services
-            if let mtpService = fileService as? MTPService {
-                mtpService.onDeviceConnectionChange = { state in
-                    DispatchQueue.main.async {
-                        self.connectionState = state
-                        
-                        switch state {
-                        case .connected:
-                            if currentPath.hasPrefix("mtp://") {
-                                // Device connected and unlocked, refresh
-                                loadItems()
+            VStack(spacing: 0) {
+                headerView
+                fileContentView
+            }
+            .background(.thickMaterial) // Ensure material background for the whole view
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.separator, lineWidth: 1) // Native separator color
+            )
+            .onAppear {
+                loadItems()
+                
+                // Set up device connection monitoring for MTP services
+                if let mtpService = fileService as? MTPService {
+                    mtpService.onDeviceConnectionChange = { state in
+                        DispatchQueue.main.async {
+                            self.connectionState = state
+                            
+                            switch state {
+                            case .connected:
+                                if currentPath.hasPrefix("mtp://") {
+                                    // Device connected and unlocked, refresh
+                                    loadItems()
+                                }
+                            case .connectedLocked:
+                                // Device connected but locked, UI will update via connectionState
+                                if currentPath.hasPrefix("mtp://") {
+                                    errorMessage = nil // Clear any previous errors
+                                    items = [] // Clear items to show empty state
+                                }
+                            case .disconnected:
+                                if currentPath.hasPrefix("mtp://") {
+                                    items = []
+                                    errorMessage = nil
+                                }
+                            case .connecting, .error:
+                                break // No specific action needed
                             }
-                        case .connectedLocked:
-                            // Device connected but locked, UI will update via connectionState
-                            if currentPath.hasPrefix("mtp://") {
-                                errorMessage = nil // Clear any previous errors
-                                items = [] // Clear items to show empty state
-                            }
-                        case .disconnected:
-                            if currentPath.hasPrefix("mtp://") {
-                                items = []
-                                errorMessage = nil
-                            }
-                        case .connecting, .error:
-                            break // No specific action needed
                         }
                     }
                 }
             }
-        }
-        .sheet(isPresented: $showingFileInfo) {
-            if let item = selectedFileInfoItem {
-                FileInfoView(item: item)
-            }
-        }
-        .alert("Delete File", isPresented: $showingDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                if let item = itemToDelete {
-                    performDelete(item)
+            .sheet(isPresented: $showingFileInfo) {
+                if let item = selectedFileInfoItem {
+                    FileInfoView(item: item)
                 }
             }
-        } message: {
-            if let item = itemToDelete {
-                Text("Are you sure you want to delete \(item.name)? This action cannot be undone.")
+            .alert("Delete File", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    if let item = itemToDelete {
+                        performDelete(item)
+                    }
+                }
+            } message: {
+                if let item = itemToDelete {
+                    Text("Are you sure you want to delete \(item.name)? This action cannot be undone.")
+                }
             }
+            
         }
-        
     }
-}
-
-
+    
+    
