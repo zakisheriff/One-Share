@@ -18,12 +18,12 @@ class LocalFileService: FileService {
         // Basic error handling/checking
         var isDir: ObjCBool = false
         guard fileManager.fileExists(atPath: path, isDirectory: &isDir) else {
-            print("DEBUG: Path does not exist: \(path)")
-            return []
+            print("❌ DEBUG: Path does not exist: \(path)")
+            throw NSError(domain: "LocalFileService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Path does not exist: \(path)"])
         }
         guard isDir.boolValue else {
-            print("DEBUG: Path is not a directory: \(path)")
-            return []
+            print("❌ DEBUG: Path is not a directory: \(path)")
+            throw NSError(domain: "LocalFileService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Path is not a directory: \(path)"])
         }
         
         // Check readability

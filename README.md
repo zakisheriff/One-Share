@@ -1,6 +1,7 @@
 # <div align="center">Lumen</div>
+
 <div align="center">
-<strong>The Next-Generation Android File Transfer for macOS</strong>
+<strong>The Next-Generation Dual-Protocol File Transfer for macOS</strong>
 </div>
 
 <br />
@@ -19,23 +20,22 @@
 
 </div>
 
-
 <br />
 
 > **"It feels like it was built by Apple."**
 >
 > Lumen isn't just a tool; it's a seamless extension of your Mac.  
-> Designed with the fluid, glassy aesthetics of **macOS 26**, it bridges the gap between your Android device and your Mac with elegance and speed.
+> Designed with the fluid, glassy aesthetics of **macOS 26**, it bridges the gap between your Android & iOS devices and your Mac with elegance and speed.
 
 ---
 
 ## 🌟 Vision
 
-Lumen’s purpose is to be:
+Lumen's purpose is to be:
 
-- **A next-generation macOS file explorer** for Android  
-- **A beautifully native SwiftUI application** showcasing true Apple-level design  
-- **A fast, stable, modern alternative** to outdated Android File Transfer tools  
+- **A next-generation macOS file explorer** for Android & iOS
+- **A beautifully native SwiftUI application** showcasing true Apple-level design
+- **A fast, stable, modern alternative** to outdated file transfer tools
 
 ---
 
@@ -67,8 +67,11 @@ Lumen is built from the ground up to be **fast, beautiful, and truly native**.
 - **Native C++ MTP Bridge**  
   No wrappers — Lumen communicates directly with libmtp.
 
+- **Native C++ AFC/HouseArrest Bridge**  
+  Direct communication with iOS devices using libimobiledevice.
+
 - **Recursive Folder Downloads**  
-  Drag entire folders from Android to Mac in one go.
+  Drag entire folders from devices to Mac in one go.
 
 - **Smart Caching**  
   Navigating directories feels instant.
@@ -97,13 +100,18 @@ Lumen/
 │ ├── Views/ # All UI components & screens
 │ ├── Models/ # Data models (Files, Directories)
 │ ├── ViewModels/ # Logic & state management
-│ ├── Services/ # MTP, device bridging, caching
+│ ├── Services/ # MTP, AFC, device bridging, caching
 │ └── Utils/ # Extensions & helpers
 │
 ├── MTPBridge/ # C++ libmtp Wrapper
 │ ├── include/
 │ ├── src/
 │ └── bridge.mm # Objective-C++ bridge to Swift
+│
+├── iOSBridge/ # C++ libimobiledevice Wrapper
+│ ├── include/
+│ ├── src/
+│ └── ios_bridge.mm # Objective-C++ bridge to Swift
 │
 ├── Resources/ # Assets, icons, UI materials
 ├── Lumen.xcodeproj # Xcode project file
@@ -114,7 +122,7 @@ Lumen/
 
 ## 📥 Download & Install
 
-You don’t need to be a developer to use Lumen. Just:
+You don't need to be a developer to use Lumen. Just:
 
 1. **Download the latest `.dmg`**  
    https://github.com/zakisheriff/Lumen/releases/latest
@@ -123,7 +131,7 @@ You don’t need to be a developer to use Lumen. Just:
 
 3. Drag **Lumen** into **Applications**.
 
-4. Launch the app and plug in your Android phone.
+4. Launch the app and plug in your Android or iOS device.
 
 ---
 
@@ -135,9 +143,9 @@ git clone https://github.com/zakisheriff/Lumen.git
 
 ### 2. Install Dependencies
 
-Requires `libmtp`:
+Requires `libmtp` and `libimobiledevice`:
 
-brew install libmtp
+brew install libmtp libimobiledevice
 
 ### 3. Build
 
@@ -147,13 +155,13 @@ Open in Xcode → **Run (⌘ + R)**.
 
 ## ☕️ Support the Project
 
-If Lumen helped you, inspired you, or saved you from Android File Transfer hell:
+If Lumen helped you, inspired you, or saved you from outdated file transfer tools:
 
-- Consider buying me a coffee  
+- Consider buying me a coffee
 - It keeps development alive and motivates future updates
 
 <div align="center">
-<a href="https://buymeacoffee.com/zakisherifw">
+<a href="https://buymeacoffee.com/zakisheriffw">
 <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="60" width="217">
 </a>
 </div>

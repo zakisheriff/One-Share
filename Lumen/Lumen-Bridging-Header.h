@@ -3,3 +3,4 @@
 //
 
 #import "MTPBridge.hpp"
+#import "iOSBridge/include/iOSBridge.h"

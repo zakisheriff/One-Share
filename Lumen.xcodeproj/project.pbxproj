@@ -411,6 +411,8 @@
 					"-L/opt/homebrew/lib",
 					"-lmtp",
 					"-lusb-1.0",
+					"-limobiledevice-1.0",
+					"-lplist-2.0",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = lumen.Lumen;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -449,6 +451,8 @@
 					"-L/opt/homebrew/lib",
 					"-lmtp",
 					"-lusb-1.0",
+					"-limobiledevice-1.0",
+					"-lplist-2.0",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = lumen.Lumen;
 				PRODUCT_NAME = "$(TARGET_NAME)";

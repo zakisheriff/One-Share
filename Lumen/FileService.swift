@@ -7,6 +7,14 @@
 
 import Foundation
 
+enum ConnectionState: String, Equatable {
+    case disconnected
+    case connecting
+    case connected
+    case connectedLocked // Connected but screen locked/no permission
+    case error
+}
+
 protocol FileService {
     func listItems(at path: String) async throws -> [FileSystemItem]
     func downloadFile(at path: String, to localURL: URL, size: Int64, progress: @escaping (Double, String) -> Void) async throws

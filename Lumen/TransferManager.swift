@@ -62,16 +62,44 @@ class TransferManager: ObservableObject {
                         }
                     }
                 } else if item.sourceService is LocalFileService && destService is LocalFileService {
-                     // Mac -> Mac (Local Copy)
+                 // Mac -> Mac (Local Copy)
                     let destURL = URL(fileURLWithPath: destPath).appendingPathComponent(item.item.name)
                     try await (item.sourceService as! LocalFileService).downloadFile(at: item.item.path, to: destURL, size: item.item.size) { [weak self] progress, status in
-                         Task { @MainActor in
+                     Task { @MainActor in
+                        self?.updateProgress(progress: progress, status: status, totalSize: item.item.size)
+                    }
+                }
+                } else if item.sourceService is LocalFileService && destService is iOSDeviceService {
+                    // Mac -> iOS (Upload)
+                    let sourceURL = URL(fileURLWithPath: item.item.path)
+                    try await destService.uploadFile(from: sourceURL, to: destPath) { [weak self] progress, status in
+                        Task { @MainActor in
                             self?.updateProgress(progress: progress, status: status, totalSize: item.item.size)
                         }
                     }
+                } else if item.sourceService is iOSDeviceService && destService is LocalFileService {
+                    // iOS -> Mac (Download)
+                    let destURL = URL(fileURLWithPath: destPath).appendingPathComponent(item.item.name)
+                    try await item.sourceService.downloadFile(at: item.item.path, to: destURL, size: item.item.size) { [weak self] progress, status in
+                        Task { @MainActor in
+                            self?.updateProgress(progress: progress, status: status, totalSize: item.item.size)
+                        }
+                    }
+                } else if item.sourceService is iOSDeviceService && destService is iOSDeviceService {
+                    // iOS -> iOS (Not supported yet)
+                    self.status = "Direct iOS-to-iOS transfer not supported"
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                } else if item.sourceService is MTPService && destService is iOSDeviceService {
+                    // Android -> iOS (Not supported yet)
+                    self.status = "Cross-platform transfer (Android to iOS) not supported"
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                } else if item.sourceService is iOSDeviceService && destService is MTPService {
+                    // iOS -> Android (Not supported yet)
+                    self.status = "Cross-platform transfer (iOS to Android) not supported"
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
                 } else {
-                    // Android -> Android (Not supported yet)
-                    self.status = "Direct Android-to-Android transfer not supported"
+                    // Unknown transfer type
+                    self.status = "Unsupported transfer type"
                     try await Task.sleep(nanoseconds: 2_000_000_000)
                 }
                 
@@ -89,6 +117,10 @@ class TransferManager: ObservableObject {
                 self.transferSpeed = ""
                 self.timeRemaining = ""
                 print("Transfer error: \(error)")
+                
+                // Show a more user-friendly error message
+                let userMessage = self.getUserFriendlyErrorMessage(error)
+                self.status = "Error: \(userMessage)"
                 
                 // Keep error visible
                 try await Task.sleep(nanoseconds: 3_000_000_000) // 3s
@@ -177,6 +209,67 @@ class TransferManager: ObservableObject {
         timeRemaining = ""
     }
     
+    private func getUserFriendlyErrorMessage(_ error: Error) -> String {
+        // Provide user-friendly error messages based on error type
+        if let nsError = error as NSError? {
+            switch nsError.domain {
+            case "ADBService": // ADB errors
+                switch nsError.code {
+                case 1:
+                    return "Device not connected. Please connect your device and try again."
+                case 2:
+                    return "Device unauthorized. Please allow USB debugging on your device."
+                case 3:
+                    return "File not found on device."
+                case 4:
+                    return "Permission denied. Check file permissions on your device."
+                default:
+                    return nsError.localizedDescription
+                }
+            case "MTPService": // MTP errors
+                switch nsError.code {
+                case 1:
+                    return "Device not connected. Please connect your device and try again."
+                case 2:
+                    return "Device storage not accessible. Unlock your device and try again."
+                case 3:
+                    return "File not found on device."
+                case 4:
+                    return "Permission denied. Check file permissions on your device."
+                default:
+                    return nsError.localizedDescription
+                }
+            case "iOSDeviceService": // iOS errors
+                switch nsError.code {
+                case 1:
+                    return "Device not connected. Please connect your iOS device and try again."
+                case 2:
+                    return "Trust this computer dialog appeared on your iOS device. Please tap Trust."
+                case 3:
+                    return "File not found on device."
+                case 4:
+                    return "Permission denied. Check file permissions on your device."
+                default:
+                    return nsError.localizedDescription
+                }
+            default:
+                // For other errors, try to provide meaningful messages
+                if nsError.localizedDescription.contains("not connected") || nsError.localizedDescription.contains("device") {
+                    return "Device not connected. Please connect your device and try again."
+                } else if nsError.localizedDescription.contains("permission") || nsError.localizedDescription.contains("denied") {
+                    return "Permission denied. Check file permissions on your device."
+                } else if nsError.localizedDescription.contains("not found") || nsError.localizedDescription.contains("No such file") {
+                    return "File not found. Please check the file path and try again."
+                } else {
+                    return nsError.localizedDescription
+                }
+            }
+        }
+        
+        // Fallback to default error description
+        return error.localizedDescription
+    }
+    
     // Handle transfers from Finder drops (direct file URLs)
     func startTransferFromURL(_ fileURL: URL, to destService: FileService, at destPath: String) {
         guard !isTransferring else { return }
@@ -207,6 +300,13 @@ class TransferManager: ObservableObject {
                             self?.updateProgress(progress: progress, status: status, totalSize: fileSize)
                         }
                     }
+                } else if destService is iOSDeviceService {
+                    // Upload to iOS
+                    try await destService.uploadFile(from: fileURL, to: destPath) { [weak self] progress, status in
+                        Task { @MainActor in
+                            self?.updateProgress(progress: progress, status: status, totalSize: fileSize)
+                        }
+                    }
                 } else if destService is LocalFileService {
                     // Copy to Mac
                     try await destService.uploadFile(from: fileURL, to: destPath) { [weak self] progress, status in
@@ -230,6 +330,10 @@ class TransferManager: ObservableObject {
                 self.transferSpeed = ""
                 self.timeRemaining = ""
                 print("Transfer error: \(error)")
+                
+                // Show a more user-friendly error message
+                let userMessage = self.getUserFriendlyErrorMessage(error)
+                self.status = "Error: \(userMessage)"
                 
                 // Keep error visible
                 try await Task.sleep(nanoseconds: 3_000_000_000) // 3s
@@ -279,6 +383,15 @@ class TransferManager: ObservableObject {
                                 self?.updateProgress(progress: totalProgress, status: "Uploading \(fileURL.lastPathComponent)...", totalSize: totalSize)
                             }
                         }
+                    } else if destService is iOSDeviceService {
+                        try await destService.uploadFile(from: fileURL, to: destPath) { [weak self] fileProgress, status in
+                            Task { @MainActor in
+                                let currentFileBytes = Int64(Double(fileSize) * fileProgress)
+                                let totalProgress = Double(totalBytesProcessed + currentFileBytes) / Double(totalSize > 0 ? totalSize : 1)
+                                
+                                self?.updateProgress(progress: totalProgress, status: "Uploading \(fileURL.lastPathComponent)...", totalSize: totalSize)
+                            }
+                        }
                     } else if destService is LocalFileService {
                         try await destService.uploadFile(from: fileURL, to: destPath) { [weak self] fileProgress, status in
                             Task { @MainActor in
@@ -307,6 +420,10 @@ class TransferManager: ObservableObject {
                 self.transferSpeed = ""
                 self.timeRemaining = ""
                 print("Transfer error: \(error)")
+                
+                // Show a more user-friendly error message
+                let userMessage = self.getUserFriendlyErrorMessage(error)
+                self.status = "Error: \(userMessage)"
                 
                 // Keep error visible
                 try await Task.sleep(nanoseconds: 3_000_000_000) // 3s
@@ -344,6 +461,11 @@ class TransferManager: ObservableObject {
         self.transferSpeed = ""
         self.timeRemaining = ""
         print("External transfer error: \(error)")
+        
+        // Show a more user-friendly error message
+        let userMessage = self.getUserFriendlyErrorMessage(error)
+        self.status = "Error: \(userMessage)"
+        
         try? await Task.sleep(nanoseconds: 3_000_000_000) // 3s
         self.isTransferring = false
     }

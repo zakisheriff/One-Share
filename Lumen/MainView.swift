@@ -13,25 +13,28 @@ struct MainView: View {
     @State private var clipboard: ClipboardItem?
     @State private var splitRatio: CGFloat = 0.5
     @EnvironmentObject var transferManager: TransferManager
+    @EnvironmentObject var deviceManager: DeviceManager
     
     // AI Search
     @StateObject private var geminiService = GeminiService()
-    @StateObject private var fileScanner: FileScanner
+    @EnvironmentObject var fileScanner: FileScanner
     @State private var showAISearch = false
     
-    init() {
-        let mtp = MTPService()
-        _remoteService = State(initialValue: mtp)
-        _fileScanner = StateObject(wrappedValue: FileScanner(mtpService: mtp))
+    // Services - use shared instances from DeviceManager
+    let localService = LocalFileService()
+    
+    // Computed properties to get services from DeviceManager
+    private var remoteService: MTPService {
+        return deviceManager.getDeviceService(for: .android) as? MTPService ?? MTPService()
     }
     
-    // Services
-    let localService = LocalFileService()
-    @State private var remoteService: MTPService // Changed to State to share with scanner
+    private var iOSRemoteService: iOSDeviceService {
+        return deviceManager.getDeviceService(for: .ios) as? iOSDeviceService ?? iOSDeviceService()
+    }
     
     var body: some View {
         NavigationSplitView {
-            SidebarView(selectedCategory: $selectedCategory)
+            SidebarView(selectedCategory: $selectedCategory, deviceManager: deviceManager)
                 .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
         } detail: {
             ZStack {
@@ -61,6 +64,18 @@ struct MainView: View {
                             clipboard: $clipboard,
                             onPaste: { destPath in
                                 transferManager.startTransfer(item: clipboard!, to: remoteService, at: destPath)
+                            }
+                        )
+                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    } else if selectedCategory == "ios" {
+                        FileBrowserView(
+                            title: "iOS",
+                            fileService: iOSRemoteService,
+                            currentPath: "/",
+                            transferManager: transferManager,
+                            clipboard: $clipboard,
+                            onPaste: { destPath in
+                                transferManager.startTransfer(item: clipboard!, to: iOSRemoteService, at: destPath)
                             }
                         )
                         .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
@@ -260,4 +275,7 @@ struct MainView: View {
 
 #Preview {
     MainView()
+        .environmentObject(DeviceManager(mtpService: nil, iosService: nil))
+        .environmentObject(TransferManager())
+        .environmentObject(FileScanner(mtpService: MTPService()))
 }

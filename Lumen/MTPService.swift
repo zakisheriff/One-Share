@@ -8,15 +8,7 @@
 import Foundation
 import Combine
 
-enum ConnectionState: String, Equatable {
-    case disconnected
-    case connecting
-    case connected
-    case connectedLocked // Connected but screen locked/no permission
-    case error
-}
-
-class MTPService: FileService, @unchecked Sendable {
+class MTPService: FileService, ObservableObject, @unchecked Sendable {
     
     // Serial queue for thread safety with libmtp which is not thread-safe
     private let queue = DispatchQueue(label: "com.lumen.mtp.queue", qos: .userInitiated)
@@ -45,6 +37,20 @@ class MTPService: FileService, @unchecked Sendable {
         
         // Start monitoring for device connections
         startDeviceMonitoring()
+    }
+    
+    // Add a method to get device name
+    func getDeviceName() -> String {
+        guard mtp_is_connected() else { return "Android Device" }
+        
+        if let cName = mtp_get_device_name() {
+            let name = String(cString: cName)
+            // Free the C string returned by mtp_get_device_name
+            free(cName)
+            return name.isEmpty ? "Android Device" : name
+        }
+        
+        return "Android Device"
     }
     
     private func log(_ message: String) {
@@ -230,7 +236,8 @@ class MTPService: FileService, @unchecked Sendable {
                 self.log("listItems: queue block started")
                 guard mtp_connect() else {
                     self.log("listItems: Connection failed")
-                    continuation.resume(throwing: NSError(domain: "MTPService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not connect. Close 'Android File Transfer' or 'Preview' and try again."]))
+                    let errorMessage = "Could not connect to Android device. Close 'Android File Transfer' or 'Preview' and try again."
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: 1, userInfo: [NSLocalizedDescriptionKey: errorMessage]))
                     return
                 }
                 
@@ -322,7 +329,20 @@ class MTPService: FileService, @unchecked Sendable {
                 if ret == 0 {
                     continuation.resume()
                 } else {
-                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: nil))
+                    let errorMessage: String
+                    switch ret {
+                    case -1:
+                        errorMessage = "Device not connected"
+                    case 1:
+                        errorMessage = "File not found on device"
+                    case 2:
+                        errorMessage = "Permission denied"
+                    case 3:
+                        errorMessage = "Storage not accessible"
+                    default:
+                        errorMessage = "Unknown error occurred during download"
+                    }
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: [NSLocalizedDescriptionKey: errorMessage]))
                 }
             }
         }
@@ -393,7 +413,22 @@ class MTPService: FileService, @unchecked Sendable {
                 if ret == 0 {
                     continuation.resume()
                 } else {
-                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: nil))
+                    let errorMessage: String
+                    switch ret {
+                    case -1:
+                        errorMessage = "Device not connected"
+                    case 1:
+                        errorMessage = "File not found on device"
+                    case 2:
+                        errorMessage = "Permission denied"
+                    case 3:
+                        errorMessage = "Storage not accessible"
+                    case 4:
+                        errorMessage = "Insufficient storage space"
+                    default:
+                        errorMessage = "Unknown error occurred during upload"
+                    }
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: [NSLocalizedDescriptionKey: errorMessage]))
                 }
             }
         }
@@ -414,7 +449,18 @@ class MTPService: FileService, @unchecked Sendable {
                 if ret == 0 {
                     continuation.resume()
                 } else {
-                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: nil))
+                    let errorMessage: String
+                    switch ret {
+                    case -1:
+                        errorMessage = "Device not connected"
+                    case 1:
+                        errorMessage = "File not found on device"
+                    case 2:
+                        errorMessage = "Permission denied"
+                    default:
+                        errorMessage = "Unknown error occurred during deletion"
+                    }
+                    continuation.resume(throwing: NSError(domain: "MTPService", code: Int(ret), userInfo: [NSLocalizedDescriptionKey: errorMessage]))
                 }
             }
         }

@@ -9,10 +9,6 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// ... (rest of file)
-
-
-
 struct FileBrowserView: View {
     let title: String
     let fileService: FileService
@@ -43,53 +39,114 @@ struct FileBrowserView: View {
     // Computed properties for path display and navigation
     private var canNavigateUp: Bool {
         // For local files, enable up button if not at root
-        if !currentPath.hasPrefix("mtp://") {
+        if !currentPath.hasPrefix("mtp://") && !currentPath.hasPrefix("ios://") {
             return currentPath != "/"
         }
         
         // For MTP, enable up button if we're not at the storage root
         // Format: mtp://storageId/fileId or deeper
-        let cleanPath = currentPath.replacingOccurrences(of: "mtp://", with: "")
-        let components = cleanPath.split(separator: "/")
-        return components.count > 1
+        if currentPath.hasPrefix("mtp://") {
+            let cleanPath = currentPath.replacingOccurrences(of: "mtp://", with: "")
+            let components = cleanPath.split(separator: "/")
+            return components.count > 1
+        }
+        
+        // For iOS, enable up button if we're not at root
+        if currentPath.hasPrefix("ios://") {
+            let cleanPath = currentPath.replacingOccurrences(of: "ios://", with: "")
+            return cleanPath != "/" && !cleanPath.isEmpty
+        }
+        
+        return currentPath != "/"
     }
-    
+
     private var canNavigateBack: Bool {
         return currentHistoryIndex > 0
     }
-    
+
     private var canNavigateForward: Bool {
         return currentHistoryIndex < navigationHistory.count - 1
     }
-    
+
     private func displayPath(_ path: String) -> String {
         // For local files, return the path as is
-        if !path.hasPrefix("mtp://") {
+        if !path.hasPrefix("mtp://") && !path.hasPrefix("ios://") {
             return path
         }
         
         // For MTP paths, show a more user-friendly representation
-        // Instead of showing the full path with IDs, show the title and indicate it's an Android device
-        if path == "mtp://" || path.isEmpty || path == "/" {
-            return "Android Device"
+        if path.hasPrefix("mtp://") {
+            if path == "mtp://" || path.isEmpty || path == "/" {
+                // Try to get actual device name
+                if let mtpService = fileService as? MTPService {
+                    return mtpService.getDeviceName()
+                }
+                return "Android Device"
+            }
+            
+            // For deeper paths, show the navigation trail
+            let cleanPath = path.replacingOccurrences(of: "mtp://", with: "")
+            let components = cleanPath.split(separator: "/")
+            if components.count <= 1 {
+                // Try to get actual device name
+                if let mtpService = fileService as? MTPService {
+                    return mtpService.getDeviceName()
+                }
+                return "Android Device"
+            }
+            
+            // Show breadcrumbs: Android Device > Folder1 > Folder2
+            // Try to get actual device name
+            var breadcrumbs = ["Android Device"]
+            if let mtpService = fileService as? MTPService {
+                breadcrumbs[0] = mtpService.getDeviceName()
+            }
+            
+            // In the future, we could maintain a navigation history to show actual folder names
+            // For now, just show the depth level
+            if components.count > 1 {
+                breadcrumbs.append(contentsOf: Array(repeating: "Folder", count: components.count - 1))
+            }
+            
+            return breadcrumbs.joined(separator: " > ")
         }
         
-        // For deeper paths, show the navigation trail
-        let cleanPath = path.replacingOccurrences(of: "mtp://", with: "")
-        let components = cleanPath.split(separator: "/")
-        if components.count <= 1 {
-            return "Android Device"
+        // For iOS paths, show a more user-friendly representation
+        if path.hasPrefix("ios://") || (path == "/" && fileService is iOSDeviceService) {
+            if path == "ios://" || path.isEmpty || path == "/" {
+                // Try to get actual device name
+                if let iosService = fileService as? iOSDeviceService {
+                    return iosService.getDeviceName()
+                }
+                return "iOS Device"
+            }
+            
+            // For deeper paths, show the navigation trail
+            let cleanPath = path.replacingOccurrences(of: "ios://", with: "")
+            let components = cleanPath.split(separator: "/")
+            if components.count <= 1 {
+                // Try to get actual device name
+                if let iosService = fileService as? iOSDeviceService {
+                    return iosService.getDeviceName()
+                }
+                return "iOS Device"
+            }
+            
+            // Show breadcrumbs: iOS Device > Folder1 > Folder2
+            // Try to get actual device name
+            var breadcrumbs = ["iOS Device"]
+            if let iosService = fileService as? iOSDeviceService {
+                breadcrumbs[0] = iosService.getDeviceName()
+            }
+            
+            if components.count > 1 {
+                breadcrumbs.append(contentsOf: Array(repeating: "Folder", count: components.count - 1))
+            }
+            
+            return breadcrumbs.joined(separator: " > ")
         }
         
-        // Show breadcrumbs: Android Device > Folder1 > Folder2
-        var breadcrumbs = ["Android Device"]
-        // In the future, we could maintain a navigation history to show actual folder names
-        // For now, just show the depth level
-        if components.count > 1 {
-            breadcrumbs.append(contentsOf: Array(repeating: "Folder", count: components.count - 1))
-        }
-        
-        return breadcrumbs.joined(separator: " > ")
+        return path
     }
     
     var filteredAndSortedItems: [FileSystemItem] {
@@ -197,6 +254,41 @@ struct FileBrowserView: View {
                     loadItems()
                 }
             }
+        } else if currentPath.hasPrefix("ios://") || (currentPath == "/" && fileService is iOSDeviceService) {
+            // iOS Navigation
+            if currentPath == "ios://" || currentPath == "ios:///" || currentPath == "/" {
+                // Already at root, can't go up
+                return
+            }
+            
+            // Remove trailing slash if present
+            var cleanPath = currentPath
+            if cleanPath.hasSuffix("/") && cleanPath != "ios://" && cleanPath != "ios:///" {
+                cleanPath.removeLast()
+            }
+            
+            // Remove last component
+            if let lastSlashIndex = cleanPath.lastIndex(of: "/") {
+                // Check if we're going above the ios:// level (index 5 is the position after "ios://")
+                let iosPrefixEndIndex = cleanPath.index(cleanPath.startIndex, offsetBy: min(6, cleanPath.count))
+                if lastSlashIndex >= iosPrefixEndIndex {
+                    let parentPath = String(cleanPath[..<lastSlashIndex])
+                    // Add current path to history before navigating
+                    addToHistory(currentPath)
+                    currentPath = parentPath.isEmpty ? "ios://" : parentPath
+                    loadItems()
+                } else {
+                    // Go back to root
+                    addToHistory(currentPath)
+                    currentPath = "ios://"
+                    loadItems()
+                }
+            } else {
+                // Go back to root
+                addToHistory(currentPath)
+                currentPath = "ios://"
+                loadItems()
+            }
         } else {
             // Local file system
             let url = URL(fileURLWithPath: currentPath)
@@ -254,6 +346,17 @@ struct FileBrowserView: View {
         error.contains("Device not connected") ||
         error.contains("MTP") ||
         (currentPath.hasPrefix("mtp://") && items.isEmpty && error.contains("loading"))
+    }
+
+    // Helper function to determine if the error is related to iOS connectivity
+    private func isIOSConnectionError(_ error: String) -> Bool {
+        return error.contains("Could not connect") ||
+        error.contains("Device not connected") ||
+        error.contains("iOS") ||
+        error.contains("Trust required") ||
+        error.contains("Device locked") ||
+        error.contains("Connection error") ||
+        (currentPath.hasPrefix("ios://") && items.isEmpty && error.contains("loading"))
     }
     
     // Show file info sheet
@@ -343,7 +446,6 @@ struct FileBrowserView: View {
     @State private var showingDeleteConfirmation = false
     @State private var itemToDelete: FileSystemItem?
     
-    // Computed property for the header/toolbar
     // Computed property for the header/toolbar
     private var headerView: some View {
         HStack(spacing: 16) {
@@ -569,19 +671,25 @@ struct FileBrowserView: View {
         VStack(alignment: .leading, spacing: 16) {
 
             
-            // Android-specific troubleshooting guidance
-            if currentPath.hasPrefix("mtp://") && isAndroidConnectionError(errorMessage) {
-                androidTroubleshootingView
-            }
-            
-            Button("Retry") {
-                loadItems()
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+        // Android-specific troubleshooting guidance
+        if currentPath.hasPrefix("mtp://") && isAndroidConnectionError(errorMessage) {
+            androidTroubleshootingView
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        
+        // iOS-specific troubleshooting guidance
+        // iOS-specific troubleshooting guidance
+        if (currentPath.hasPrefix("ios://") || title == "iOS") && isIOSConnectionError(errorMessage) {
+            iOSTroubleshootingView
+        }
+        
+        Button("Retry") {
+            loadItems()
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var androidTroubleshootingView: some View {
@@ -640,7 +748,74 @@ struct FileBrowserView: View {
         .cornerRadius(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
+    private var iOSTroubleshootingView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("iOS Connection Guide")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 4)
+                
+                Group {
+                    Text("Step 1: Mac Preparation")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Make sure you have iTunes or Finder installed (for iOS 13+).\n• Quit any other iOS device management apps.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 2: iOS Setup")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Unlock your iPhone/iPad.\n• Connect it to your Mac with a Lightning cable.\n• If prompted on your device, tap 'Trust This Computer'.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 3: Unlock Device")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• If your device is locked with a passcode, unlock it.\n• Make sure you've tapped 'Trust' if prompted.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 4: House Arrest (App Sandbox Access)")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Some apps require special permissions to access their files.\n• If you're trying to access a specific app's files, make sure the app supports file sharing.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    Divider()
+                    
+                    Text("Step 5: Last Resort")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text("• Unplug the USB cable and plug it back in.\n• Try a different USB port or cable.\n• Restart your Mac and iOS device.\n• Try unlocking and trusting again.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(Color.blue.opacity(0.05))
+        .cornerRadius(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private var emptyStateView: some View {
         VStack {
             if currentPath.hasPrefix("mtp://") {
@@ -694,6 +869,116 @@ struct FileBrowserView: View {
                 }
                 .frame(maxWidth: 300)
                 .padding()
+            } else if currentPath.hasPrefix("ios://") || (currentPath == "/" && fileService is iOSDeviceService) || title == "iOS" {
+                VStack(spacing: 20) {
+                    if connectionState == .connectedLocked {
+                        // Check if it's trust required or just locked
+                        let isTrustRequired = (fileService as? iOSDeviceService)?.connectionState == .connectedLocked
+                        
+                        if isTrustRequired {
+                            // Trust required
+                            Image(systemName: "hand.raised.fill")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.orange)
+                                .symbolEffect(.pulse)
+                            
+                            VStack(spacing: 8) {
+                                Text("Trust This Computer")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                
+                                Text("Please tap 'Trust' on your iOS device when prompted.")
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 300)
+                            }
+                            
+                            Button("I've Trusted This Computer") {
+                                Task {
+                                    loadItems()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        } else {
+                            // Device locked
+                            Image(systemName: "lock.shield")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.orange)
+                                .symbolEffect(.pulse)
+                            
+                            VStack(spacing: 8) {
+                                Text("Unlock Your Device")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                
+                                Text("Please unlock your iOS device to continue.")
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 300)
+                            }
+                            
+                            Button("I've Unlocked My Device") {
+                                Task {
+                                    loadItems()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        }
+                    } else {
+                        // Connecting or Disconnected
+                        VStack(spacing: 20) {
+                            Image(systemName: "iphone.gen3")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.blue)
+                                .symbolEffect(.pulse)
+                            
+                            Text("Connect iOS Device")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "cable.connector")
+                                        .frame(width: 24)
+                                    Text("1. Connect via USB cable")
+                                }
+                                
+                                HStack {
+                                    Image(systemName: "lock.open")
+                                        .frame(width: 24)
+                                    Text("2. Unlock your device")
+                                }
+                                
+                                HStack {
+                                    Image(systemName: "hand.raised")
+                                        .frame(width: 24)
+                                    Text("3. Tap 'Trust' if prompted")
+                                }
+                            }
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(12)
+                            
+                            if connectionState == .connecting {
+                                HStack {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text("Searching for device...")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: 300)
+                .padding()
             } else {
                 Text("No items found")
                     .font(.headline)
@@ -727,13 +1012,29 @@ struct FileBrowserView: View {
         .padding()
     }
     
+    @ViewBuilder
+    private func styledIcon(for item: FileSystemItem, size: CGFloat) -> some View {
+        let icon = IconHelper.nativeIcon(for: item)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
+        
+        if item.path.hasPrefix("mtp://") || item.path.hasPrefix("ios://") {
+            icon.foregroundStyle(
+                LinearGradient(
+                    colors: IconHelper.colorForType(item.type),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        } else {
+            icon
+        }
+    }
+
     private func fileGridItem(_ item: FileSystemItem) -> some View {
         VStack {
-            IconHelper.nativeIcon(for: item)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: iconSize, height: iconSize)
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            styledIcon(for: item, size: iconSize)
             
             Text(item.name)
                 .font(.system(.caption, design: .rounded))
@@ -789,11 +1090,7 @@ struct FileBrowserView: View {
     
     private func fileListItem(_ item: FileSystemItem) -> some View {
         HStack {
-            IconHelper.nativeIcon(for: item)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 28, height: 28)
-                .shadow(radius: 1, y: 0.5)
+            styledIcon(for: item, size: 28)
             
             VStack(alignment: .leading) {
                 Text(item.name)
@@ -875,7 +1172,11 @@ struct FileBrowserView: View {
             self.clipboard = ClipboardItem(item: item, sourceService: self.fileService, isCut: false)
         }
         
-        if item.path.hasPrefix("mtp://") {
+        // Check if this is a remote file (MTP or iOS)
+        let isRemoteFile = item.path.hasPrefix("mtp://") || 
+                           (item.path.hasPrefix("/") && fileService is iOSDeviceService)
+        
+        if isRemoteFile {
             let itemProvider = NSItemProvider()
             
             // Fix: Set suggestedName without extension to prevent double extension
@@ -985,6 +1286,36 @@ struct FileBrowserView: View {
                                 }
                             case .disconnected:
                                 if currentPath.hasPrefix("mtp://") {
+                                    items = []
+                                    errorMessage = nil
+                                }
+                            case .connecting, .error:
+                                break // No specific action needed
+                            }
+                        }
+                    }
+                }
+                
+                // Set up device connection monitoring for iOS services
+                if let iosService = fileService as? iOSDeviceService {
+                    iosService.onDeviceConnectionChange = { state in
+                        DispatchQueue.main.async {
+                            self.connectionState = state
+                            
+                            switch state {
+                            case .connected:
+                                if currentPath.hasPrefix("ios://") || currentPath == "/" {
+                                    // Device connected and unlocked, refresh
+                                    loadItems()
+                                }
+                            case .connectedLocked:
+                                // Device connected but locked or trust required, UI will update via connectionState
+                                if currentPath.hasPrefix("ios://") || currentPath == "/" {
+                                    errorMessage = nil // Clear any previous errors
+                                    items = [] // Clear items to show empty state
+                                }
+                            case .disconnected:
+                                if currentPath.hasPrefix("ios://") || currentPath == "/" {
                                     items = []
                                     errorMessage = nil
                                 }

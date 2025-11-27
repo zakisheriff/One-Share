@@ -12,10 +12,31 @@ struct LumenApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var transferManager = TransferManager()
     
+    // Create shared service instances
+    @StateObject private var mtpService = MTPService()
+    @StateObject private var iosService = iOSDeviceService()
+    
+    // Pass shared services to DeviceManager
+    @StateObject private var deviceManager: DeviceManager
+    
+    // FileScanner needs MTPService
+    @StateObject private var fileScanner: FileScanner
+    
+    init() {
+        let mtp = MTPService()
+        let ios = iOSDeviceService()
+        _mtpService = StateObject(wrappedValue: mtp)
+        _iosService = StateObject(wrappedValue: ios)
+        _deviceManager = StateObject(wrappedValue: DeviceManager(mtpService: mtp, iosService: ios))
+        _fileScanner = StateObject(wrappedValue: FileScanner(mtpService: mtp))
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(transferManager)
+                .environmentObject(deviceManager)
+                .environmentObject(fileScanner)
                 .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow).ignoresSafeArea())
                 .background(WindowAccessor(transferManager: transferManager))
         }

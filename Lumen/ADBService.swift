@@ -65,7 +65,7 @@ class ADBService: FileService {
         let _ = try await Task.detached(priority: .userInitiated) {
             // Use -p flag for progress
             // adb pull -p <remote> <local>
-            let _ = try self.runADBCommand(["pull", "-p", path, localURL.path]) { line in
+            try self.runADBCommand(["pull", "-p", path, localURL.path]) { line in
                 // Parse progress from output like: [ 45%] /path/to/file
                 // ADB pull output format can vary, but often shows percentage
                 // This is a simplified parser
@@ -97,7 +97,7 @@ class ADBService: FileService {
         let _ = try await Task.detached(priority: .userInitiated) {
             // Use -p flag for progress
             // adb push -p <local> <remote>
-            let _ = try self.runADBCommand(["push", "-p", localURL.path, path]) { line in
+            try self.runADBCommand(["push", "-p", localURL.path, path]) { line in
                 if let percent = self.parseProgress(from: line) {
                     progress(percent, "Uploading...")
                 }
@@ -132,14 +132,15 @@ class ADBService: FileService {
         task.standardOutput = pipe
         task.standardError = pipe
         
-        var fullOutput = ""
         let outputQueue = DispatchQueue(label: "com.lumen.adb.output")
+        var fullOutput = ""
+        let fullOutputLock = NSLock()
         
         if let handler = progressHandler {
             pipe.fileHandleForReading.readabilityHandler = { handle in
                 let data = handle.availableData
                 if !data.isEmpty, let str = String(data: data, encoding: .utf8) {
-                    outputQueue.sync {
+                    fullOutputLock.withLock {
                         fullOutput += str
                     }
                     let lines = str.components(separatedBy: CharacterSet(charactersIn: "\r\n"))
@@ -148,6 +149,9 @@ class ADBService: FileService {
                     }
                 }
             }
+        } else {
+            // If no progress handler, we still need to read the output to prevent blocking
+            pipe.fileHandleForReading.readabilityHandler = { _ in }
         }
         
         try task.run()
@@ -163,6 +167,12 @@ class ADBService: FileService {
             task.waitUntilExit()
             pipe.fileHandleForReading.readabilityHandler = nil
         }
+        
+        // Ensure the process is properly cleaned up
+        task.terminate()
+        
+        // Close file handles
+        pipe.fileHandleForReading.closeFile()
         
         if task.terminationStatus != 0 {
              // Access fullOutput safely

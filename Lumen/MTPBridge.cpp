@@ -54,38 +54,52 @@ bool mtp_check_storage() {
     if (device == NULL) return false;
     
     // Refresh storage list
-    if (LIBMTP_Get_Storage(device, LIBMTP_STORAGE_SORTBY_NOTSORTED) != 0) {
+    int result = LIBMTP_Get_Storage(device, LIBMTP_STORAGE_SORTBY_NOTSORTED);
+    
+    // LIBMTP_Get_Storage returns 0 on success, -1 on failure
+    if (result != 0) {
         // Error getting storage, might be disconnected or locked
-        // But LIBMTP_Get_Storage returns -1 on error, 0 on success?
-        // Actually checking libmtp docs/source:
-        // LIBMTP_Get_Storage returns 0 on success, -1 on failure.
-        // It populates device->storage.
+        return false;
     }
     
-    // Even if Get_Storage fails, we check if device->storage is non-null
-    // If the device is locked, usually we can't get storage info.
+    // Check if storage info is available and valid
+    if (device->storage == NULL) {
+        return false;
+    }
     
-    return (device->storage != NULL);
+    // Additional safety check - verify storage ID is valid
+    if (device->storage->id == 0) {
+        return false;
+    }
+    
+    return true;
 }
 
 char* mtp_get_device_name() {
     if (!device) return NULL;
-    return LIBMTP_Get_Modelname(device);
+    char* name = LIBMTP_Get_Modelname(device);
+    // Note: Caller is responsible for freeing this string
+    return name;
 }
 
 MTPFileInfo* mtp_list_files(uint32_t storage_id, uint32_t parent_id, int* count) {
-    if (!device) {
-        *count = 0;
+    if (!device || !count) {
+        if (count) *count = 0;
         return NULL;
     }
 
     // If storage_id is 0, try to get the first storage
     if (storage_id == 0) {
          // Ensure device parameters are up to date
-         LIBMTP_Get_Storage(device, LIBMTP_STORAGE_SORTBY_NOTSORTED);
-         if (device->storage) {
-             storage_id = device->storage->id;
-         } else {
+         int result = LIBMTP_Get_Storage(device, LIBMTP_STORAGE_SORTBY_NOTSORTED);
+         if (result != 0 || device->storage == NULL) {
+             *count = 0;
+             return NULL;
+         }
+         storage_id = device->storage->id;
+         
+         // Verify storage_id is valid
+         if (storage_id == 0) {
              *count = 0;
              return NULL;
          }
@@ -102,18 +116,41 @@ MTPFileInfo* mtp_list_files(uint32_t storage_id, uint32_t parent_id, int* count)
     }
     *count = c;
 
-    if (c == 0) {
+    if (c == 0 || files == NULL) {
+        // Free the libmtp file list if we have one
+        LIBMTP_file_t *tmp;
+        while (files != NULL) {
+            tmp = files;
+            files = files->next;
+            LIBMTP_destroy_file_t(tmp);
+        }
         return NULL;
     }
 
     MTPFileInfo* result = (MTPFileInfo*)malloc(sizeof(MTPFileInfo) * c);
+    if (!result) {
+        // Memory allocation failed, clean up and return NULL
+        LIBMTP_file_t *tmp;
+        while (files != NULL) {
+            tmp = files;
+            files = files->next;
+            LIBMTP_destroy_file_t(tmp);
+        }
+        *count = 0;
+        return NULL;
+    }
     
     f = files;
     int i = 0;
-    while (f != NULL) {
+    while (f != NULL && i < c) {
         result[i].id = f->item_id;
         result[i].storage_id = f->storage_id;
-        strncpy(result[i].name, f->filename, 255);
+        // Add null check for filename
+        if (f->filename != NULL) {
+            strncpy(result[i].name, f->filename, 255);
+        } else {
+            result[i].name[0] = '\0';
+        }
         result[i].name[255] = '\0';
         result[i].size = f->filesize;
         result[i].is_folder = (f->filetype == LIBMTP_FILETYPE_FOLDER);
@@ -136,6 +173,9 @@ MTPFileInfo* mtp_list_files(uint32_t storage_id, uint32_t parent_id, int* count)
 }
 
 void mtp_free_files(MTPFileInfo* files) {
+    // Free the array of MTPFileInfo structs
+    // Note: This only frees the array itself, not any strings within the structs
+    // since we use fixed-size char arrays rather than dynamically allocated strings
     if (files) {
         free(files);
     }
@@ -183,6 +223,13 @@ int mtp_download_file(uint32_t file_id, const char* dest_path, MTPProgressCallba
     MTPBridgeCallbackData cbData = { callback, context, 0, std::chrono::steady_clock::now() };
     
     int ret = LIBMTP_Get_File_To_File(device, file_id, dest_path, mtp_bridge_progress_wrapper, (void*)&cbData);
+    
+    // Check for specific error conditions
+    if (ret != 0) {
+        // Log error or handle specific cases
+        // For now, just return the error code
+    }
+    
     return ret;
 }
 
@@ -211,6 +258,13 @@ int mtp_upload_file(const char* source_path, uint32_t storage_id, uint32_t paren
     int ret = LIBMTP_Send_File_From_File(device, source_path, newfile, mtp_bridge_progress_wrapper, (void*)&cbData);
     
     LIBMTP_destroy_file_t(newfile);
+    
+    // Check for specific error conditions
+    if (ret != 0) {
+        // Log error or handle specific cases
+        // For now, just return the error code
+    }
+    
     return ret;
 }
 
@@ -222,4 +276,5 @@ int mtp_delete_file(uint32_t file_id) {
 }
 
 #ifdef __cplusplus
+
 #endif
