@@ -192,7 +192,7 @@ If One Share helped you, consider supporting development:
 ---
 
 <p align="center">
-Made with ❤️ by <strong>Zaki Sheriff</strong>
+Made by <strong>Zaki Sheriff</strong>
 <br />
 Swift • Kotlin • React Native
 </p>
