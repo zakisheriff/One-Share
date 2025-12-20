@@ -1,7 +1,9 @@
 # <div align="center">One Share</div>
 
 <div align="center">
-<strong>The Next-Generation Dual-Protocol File Transfer for macOS</strong>
+<strong>Dual-Protocol File Transfer for macOS & Android</strong>
+<br />
+<em>Wired + Wireless • Mac ↔ Android ↔ iOS</em>
 </div>
 
 <br />
@@ -9,84 +11,135 @@
 <div align="center">
 
 ![macOS](https://img.shields.io/badge/macOS-15.0+-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Android](https://img.shields.io/badge/Android-12+-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-Expo-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey?style=for-the-badge)
 
 <br />
 
-[![Download](https://img.shields.io/badge/Download-DMG-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/zakisheriff/OneShare/releases/latest)
+[![Download Mac](https://img.shields.io/badge/Download_Mac-DMG-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/zakisheriff/OneShare/releases/latest)
+[![Download Android](https://img.shields.io/badge/Download_Android-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/zakisheriff/OneShare/releases/latest)
 
 </div>
 
 <br />
 
-> **"It feels like it was built by Apple."**
+> **"It feels like it was built by Apple — and Google."**
 >
-> One Share isn't just a tool; it's a seamless extension of your Mac.  
-> Designed with the fluid, glassy aesthetics of **macOS 26**, it bridges the gap between your Android & iOS devices and your Mac with elegance and speed.
+> One Share bridges the gap between your devices with **two transfer modes**:
+> - 🔌 **Wired**: USB transfers via MTP (Android) and AFC (iOS)
+> - 📡 **Wireless**: Bluetooth discovery + WiFi Direct transfers
 
 ---
 
-## 🌟 Vision
+## ✨ Features at a Glance
 
-One Share's purpose is to be:
-
-- **A next-generation macOS file explorer** for Android & iOS
-- **A beautifully native SwiftUI application** showcasing true Apple-level design
-- **A fast, stable, modern alternative** to outdated file transfer tools
-
----
-
-## ✨ Why One Share?
-
-Forget the clunky, outdated file transfer tools of the past.  
-One Share is built from the ground up to be **fast, beautiful, and truly native**.
+| Feature | Mac App | Android App |
+|---------|---------|-------------|
+| 🔌 **USB Wired Transfer** | ✅ MTP + AFC | — |
+| 📡 **Wireless Transfer** | ✅ BLE + TCP | ✅ BLE + TCP |
+| 🎨 **Liquid Glass UI** | ✅ SwiftUI | ✅ React Native |
+| 📂 **File Browser** | ✅ Full access | ✅ Send files |
+| 🔐 **Secure Pairing** | ✅ 4-digit code | ✅ 4-digit code |
+| ⚡ **Fast Streaming** | ✅ 128KB chunks | ✅ 128KB chunks |
 
 ---
 
-## 🎨 Stunning "Liquid Glass" UI
+## 🔌 Wired Transfer (USB)
 
-- **Native Aesthetics**  
-  Built with SwiftUI and designed to feel right at home on macOS Sequoia.
+The Mac app provides a **native file explorer** for connected devices:
 
-- **Unified Glass Window**  
-  A seamless, translucent sidebar merging perfectly with the title bar.
-
-- **Liquid Selection**  
-  Files and folders highlight with a premium, rounded, blurred-glass glow.
-
-- **Zero-Latency Interaction**  
-  Smooth hover effects and instant feedback across the UI.
+- **Android via MTP**: Browse, copy, paste, delete files directly
+- **iOS via AFC**: Access app documents and media
+- **Auto-Detection**: Devices appear instantly when plugged in
+- **Recursive Downloads**: Drag entire folders to your Mac
+- **Smart Caching**: Directory navigation feels instant
 
 ---
 
-## 🚀 Blazing Fast Performance
+## 📡 Wireless Transfer (Bluetooth + WiFi)
 
-- **Native C++ MTP Bridge**  
-  No wrappers — One Share communicates directly with libmtp.
+Transfer files **without cables** between Mac and Android:
 
-- **Native C++ AFC/HouseArrest Bridge**  
-  Direct communication with iOS devices using libimobiledevice.
+### How It Works
+1. **Discovery**: Devices find each other via Bluetooth Low Energy (BLE)
+2. **Pairing**: Secure 4-digit code verification
+3. **Transfer**: High-speed TCP over WiFi (same network or hotspot)
 
-- **Recursive Folder Downloads**  
-  Drag entire folders from devices to Mac in one go.
-
-- **Smart Caching**  
-  Navigating directories feels instant.
+### Wireless Features
+- **No Internet Required**: Works over local WiFi or hotspot
+- **Auto-Accept**: Paired devices transfer instantly
+- **Real-Time Progress**: Speed, ETA, and percentage
+- **Drag & Drop**: Drop files onto the session view to send
+- **Transfer History**: See all sent and received files
 
 ---
 
-## 🔌 Seamless Connectivity
+## 🎨 Liquid Glass UI
 
-- **Auto-Detection**  
-  Plug in your device — it appears instantly.
+Both apps feature a premium, modern aesthetic:
 
-- **Smart Permission Handling**  
-  If your phone is locked, One Share waits and refreshes automatically once unlocked.
+### Mac (SwiftUI)
+- Native macOS materials (`.ultraThinMaterial`)
+- Frosted glass device cards and panels
+- Smooth animations and hover effects
+- Dark mode optimized
 
-- **Force Reconnect Button**  
-  Fixes stubborn permission issues instantly.
+### Android (React Native)
+- Glass container components with blur
+- Dark theme with subtle gradients
+- Platform-native haptic feedback
+- Bottom tab navigation
+
+---
+
+## 📥 Installation
+
+### Mac App
+
+1. **Download** `OneShare.dmg` from [Releases](https://github.com/zakisheriff/OneShare/releases/latest)
+2. Open the `.dmg`
+3. Drag **One Share** to **Applications**
+4. Launch and connect your device
+
+### Android App
+
+1. **Download** `OneShare.apk` from [Releases](https://github.com/zakisheriff/OneShare/releases/latest)
+2. Enable "Install from Unknown Sources" if prompted
+3. Install and launch
+4. Grant Bluetooth and Location permissions (required for BLE)
+
+---
+
+## �️ For Developers
+
+### Prerequisites
+
+**Mac App:**
+```bash
+brew install libmtp libimobiledevice
+```
+
+**Android App:**
+```bash
+cd oneshare-android
+npm install
+```
+
+### Building
+
+**Mac:**
+```bash
+open Lumen.xcodeproj
+# Run (⌘ + R)
+```
+
+**Android:**
+```bash
+cd oneshare-android
+npx expo run:android
+```
 
 ---
 
@@ -94,70 +147,41 @@ One Share is built from the ground up to be **fast, beautiful, and truly native*
 
 ```
 OneShare/
-├── Lumen/ # Main SwiftUI macOS app
-│ ├── App/ # App entry & lifecycle
-│ ├── Views/ # All UI components & screens
-│ ├── Models/ # Data models (Files, Directories)
-│ ├── ViewModels/ # Logic & state management
-│ ├── Services/ # MTP, AFC, device bridging, caching
-│ └── Utils/ # Extensions & helpers
+├── Lumen/                   # macOS SwiftUI App
+│   ├── WirelessTransfer/    # Bluetooth + TCP networking
+│   │   ├── NetworkManager   # TCP server/client
+│   │   ├── DiscoveryManager # BLE scanning/advertising
+│   │   ├── PairingManager   # Secure code verification
+│   │   └── SessionView      # Trusted session UI
+│   ├── MTPBridge/           # C++ libmtp wrapper
+│   ├── iOSBridge/           # C++ libimobiledevice wrapper
+│   └── Views/               # SwiftUI components
 │
-├── MTPBridge/ # C++ libmtp Wrapper
-│ ├── include/
-│ ├── src/
-│ └── bridge.mm # Objective-C++ bridge to Swift
+├── oneshare-android/        # Android React Native App
+│   ├── src/
+│   │   ├── screens/         # HomeScreen, RecentsScreen
+│   │   ├── components/      # TransferModal, PairingModal
+│   │   └── services/        # TransferService, BleService
+│   └── android/
+│       └── modules/         # Native Kotlin networking
 │
-├── iOSBridge/ # C++ libimobiledevice Wrapper
-│ ├── include/
-│ ├── src/
-│ └── ios_bridge.mm # Objective-C++ bridge to Swift
-│
-├── Resources/ # Assets, icons, UI materials
-├── Lumen.xcodeproj # Xcode project file
-└── README.md # Documentation
+└── README.md
 ```
 
 ---
 
-## 📥 Download & Install
+## 🔒 Privacy & Security
 
-You don't need to be a developer to use One Share. Just:
-
-1. **Download the latest `.dmg`**  
-   https://github.com/zakisheriff/OneShare/releases/latest
-
-2. Open the `.dmg`.
-
-3. Drag **One Share** into **Applications**.
-
-4. Launch the app and plug in your Android or iOS device.
-
----
-
-## 🛠️ For Developers
-
-### 1. Clone the repository
-
-git clone https://github.com/zakisheriff/OneShare.git
-
-### 2. Install Dependencies
-
-Requires `libmtp` and `libimobiledevice`:
-
-brew install libmtp libimobiledevice
-
-### 3. Build
-
-Open in Xcode → **Run (⌘ + R)**.
+- **Local Only**: All transfers happen on your local network
+- **No Cloud**: Your files never leave your devices
+- **Secure Pairing**: 4-digit code prevents unauthorized access
+- **Open Source**: Full transparency of code
 
 ---
 
 ## ☕️ Support the Project
 
-If One Share helped you, inspired you, or saved you from outdated file transfer tools:
-
-- Consider buying me a coffee
-- It keeps development alive and motivates future updates
+If One Share helped you, consider supporting development:
 
 <div align="center">
 <a href="https://buymeacoffee.com/zakisheriffw">
@@ -168,5 +192,7 @@ If One Share helped you, inspired you, or saved you from outdated file transfer 
 ---
 
 <p align="center">
-Made with Swift by <strong>Zaki Sheriff</strong>
+Made with ❤️ by <strong>Zaki Sheriff</strong>
+<br />
+Swift • Kotlin • React Native
 </p>
