@@ -12,3 +12,33 @@ build/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# React Native & Expo
+node_modules/
+.expo/
+npm-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+local.properties
+.gradle/
+/android/app/build/
+/android/build/
+flinch-android/android/.gradle/
+flinch-android/android/app/build/
+flinch-android/android/build/
+flinch-android/node_modules/
+
+# MacOS / Xcode (Enhanced)
+UserInterfaceState.xcuserstate
+modules.xml
+.idea/
+*.iml

@@ -24,6 +24,11 @@ struct SidebarView: View {
                     .tag("ios")
             }
             
+            Section("Wireless") {
+                Label("Transfer", systemImage: "antenna.radiowaves.left.and.right")
+                    .tag("wireless")
+            }
+            
             // Connected Devices Section
             if !deviceManager.connectedDevices.isEmpty {
                 Section("Connected Devices") {

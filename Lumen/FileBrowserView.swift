@@ -1350,6 +1350,18 @@ struct FileBrowserView: View {
             handleDoubleClick(on: item)
         }
         
+        // Only show Send Wirelessly for local files
+        if !item.path.hasPrefix("mtp://") && !item.path.hasPrefix("ios://") && !item.isDirectory {
+            Button("Send Wirelessly") {
+                // Post notification to open wireless transfer with this file
+                NotificationCenter.default.post(
+                    name: Notification.Name("SendWirelessly"),
+                    object: nil,
+                    userInfo: ["item": item]
+                )
+            }
+        }
+        
         Divider()
         
         Button("Copy") {

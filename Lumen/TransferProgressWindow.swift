@@ -28,7 +28,7 @@ struct TransferProgressWindow: View {
         // We don't need the background material here if the window itself handles it
         // But TransferProgressView has it built-in.
         // Let's keep it for now.
-        .onChange(of: transferManager.isTransferring) { isTransferring in
+        .onChange(of: transferManager.isTransferring) { _, isTransferring in
             if !isTransferring {
                 dismiss()
             }

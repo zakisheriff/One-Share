@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Icon Caching for Performance
 final class IconCache {
@@ -60,9 +61,13 @@ struct IconHelper {
         let nsImage: NSImage
         
         if item.isDirectory {
-            nsImage = workspace.icon(forFileType: NSFileTypeForHFSTypeCode(OSType(kGenericFolderIcon)))
+             nsImage = workspace.icon(for: .folder)
         } else {
-            nsImage = workspace.icon(forFileType: ext.isEmpty ? "public.data" : ext)
+            if let type = UTType(filenameExtension: ext) {
+                nsImage = workspace.icon(for: type)
+            } else {
+                nsImage = workspace.icon(for: .data)
+            }
         }
         
         nsImage.size = NSSize(width: 128, height: 128)

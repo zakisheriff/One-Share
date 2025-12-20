@@ -20,6 +20,10 @@ struct MainView: View {
     @EnvironmentObject var fileScanner: FileScanner
     @State private var showAISearch = false
     
+    // Wireless Transfer
+    @StateObject private var wirelessState = WirelessTransferState()
+    @State private var selectedFilesForWireless: [FileSystemItem] = []
+    
     // Services - use shared instances from DeviceManager
     let localService = LocalFileService()
     
@@ -77,6 +81,13 @@ struct MainView: View {
                             onPaste: { destPath in
                                 transferManager.startTransfer(item: clipboard!, to: iOSRemoteService, at: destPath)
                             }
+                        )
+                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    } else if selectedCategory == "wireless" {
+                        // Wireless Transfer View
+                        WirelessTransferView(
+                            wirelessState: wirelessState,
+                            selectedFilesToSend: $selectedFilesForWireless
                         )
                         .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
                     } else {
@@ -148,6 +159,18 @@ struct MainView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 500)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("SendWirelessly"))) { notification in
+            if let item = notification.userInfo?["item"] as? FileSystemItem {
+                // Switch to wireless view
+                selectedCategory = "wireless"
+                // Start wireless if not enabled
+                if !wirelessState.isEnabled {
+                    wirelessState.start()
+                }
+                // Set file to send
+                selectedFilesForWireless = [item]
+            }
+        }
 
         .toolbar {
             ToolbarItemGroup(placement: .automatic) {
