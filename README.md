@@ -8,15 +8,14 @@
 
 <div align="center">
 
-<img src="assets/badges/macos-tahoe.svg" height="50" />
-<img src="assets/badges/swift.svg" height="50" />
-<img src="assets/badges/license.svg" height="50" />
+![macOS](https://img.shields.io/badge/macOS-15.0+-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey?style=for-the-badge)
 
 <br />
 
-<a href="https://github.com/zakisheriff/OneShare/releases/latest">
-<img src="assets/badges/download-dmg.svg" height="50" />
-</a>
+[![Download](https://img.shields.io/badge/Download-DMG-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/zakisheriff/OneShare/releases/latest)
 
 </div>
 
