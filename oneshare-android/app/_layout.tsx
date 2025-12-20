@@ -103,9 +103,18 @@ function RootLayoutNav() {
     const transferProgressSub = eventEmitter.addListener('OneShare:TransferProgress', (event: any) => {
       // Auto-close on completion
       if (Math.round(event.progress) >= 100) {
+        const isSending = event.type === 'sending';
+        // Sending: Close immediately (no completion screen)
+        // Receiving: Show completion for 2 seconds
+        const delay = isSending ? 0 : 2000;
         setTimeout(() => {
           setTransferState(prev => ({ ...prev, visible: false, progress: 0, eta: null }));
-        }, 2000); // 2 second auto-close delay
+        }, delay);
+
+        // For sending, don't update state to 100% (prevent flicker of complete screen)
+        if (isSending) {
+          return;
+        }
       }
 
       setTransferState(prev => ({
@@ -214,12 +223,16 @@ function PairingModalController({ visible, requestId, remotePort, onClose, onSuc
     const sub = eventEmitter.addListener('OneShare:PairingVerify', (data: any) => {
       console.log("Verifying code:", data.code, "Expected:", newCode);
       if (data.code === newCode) {
-        // Success!
-        TransferService.resolvePairingRequest(data.requestId, true);
+        // Success! Resolve pairing - errors can be ignored since pairing succeeded
+        TransferService.resolvePairingRequest(data.requestId, true).catch(err => {
+          console.log("Pairing resolve warning (can be ignored - pairing succeeded):", err.message);
+        });
         onSuccess("Mac", data.remoteIp, data.remotePort || remotePort);
       } else {
         // Fail
-        TransferService.resolvePairingRequest(data.requestId, false);
+        TransferService.resolvePairingRequest(data.requestId, false).catch(err => {
+          console.log("Pairing resolve error:", err.message);
+        });
         showAlert("Pairing Failed", "Incorrect code entered on Mac.", "error");
         onClose();
       }

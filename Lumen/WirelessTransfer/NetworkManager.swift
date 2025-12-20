@@ -606,6 +606,11 @@ class NetworkManager: ObservableObject {
     // Queue state
     private var transferQueue: [URL] = []
     private var currentTarget: (ip: String, port: UInt16)?
+    
+    // Sender Speed Tracking
+    private var lastSendingUpdateTime: Date?
+    private var lastSendingBytesTransferred: Int64 = 0
+    private var sendingSpeedSamples: [Double] = []
 
     func sendFiles(urls: [URL], to ip: String, port: UInt16) {
         self.transferQueue.append(contentsOf: urls)
@@ -627,6 +632,30 @@ class NetworkManager: ObservableObject {
 
     func sendFile(to ip: String, port: UInt16, url: URL) {
         print("Sending file to \(ip):\(port)")
+        // Add to history
+        DispatchQueue.main.async {
+            let historyItem = TransferHistoryItem(
+                id: UUID(),
+                fileName: url.lastPathComponent,
+                fileSize: (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { Int64($0) } ?? 0,
+                isIncoming: false,
+                progress: 0,
+                state: .transferring,
+                date: Date()
+            )
+            self.transferHistory.insert(historyItem, at: 0)
+            self.currentTransferFileName = url.lastPathComponent
+            self.isTransferring = true
+            self.transferProgress = 0
+            
+            // Reset speed stats
+            self.lastSendingUpdateTime = Date()
+            self.lastSendingBytesTransferred = 0
+            self.sendingSpeedSamples = []
+            self.transferSpeed = ""
+            self.timeRemaining = "Calculating..."
+        }
+
         let host = NWEndpoint.Host(ip)
         let port = NWEndpoint.Port(rawValue: port)!
         
@@ -789,10 +818,49 @@ class NetworkManager: ObservableObject {
                         offset += Int64(currentChunkSize)
                         
                         DispatchQueue.main.async {
-                            self.transferProgress = Double(offset) / Double(fileSize) * 100
+                            let progress = Double(offset) / Double(fileSize) * 100
+                            self.transferProgress = progress
+                            
+                            // Speed & ETA Calculation for Sender
+                            let now = Date()
+                            if let lastTime = self.lastSendingUpdateTime {
+                                let timeDelta = now.timeIntervalSince(lastTime)
+                                if timeDelta > 0.5 { // Update every 500ms
+                                    let bytesDelta = offset - self.lastSendingBytesTransferred
+                                    let instantSpeed = Double(bytesDelta) / timeDelta
+                                    
+                                    self.sendingSpeedSamples.append(instantSpeed)
+                                    if self.sendingSpeedSamples.count > 10 { self.sendingSpeedSamples.removeFirst() }
+                                    
+                                    let avgSpeed = self.sendingSpeedSamples.reduce(0, +) / Double(self.sendingSpeedSamples.count)
+                                    
+                                    // Speed String
+                                    self.transferSpeed = ByteCountFormatter.string(fromByteCount: Int64(avgSpeed), countStyle: .file) + "/s"
+                                    
+                                    // ETA String
+                                    let remainingBytes = fileSize - offset
+                                    if avgSpeed > 0 {
+                                        let secondsRemaining = Double(remainingBytes) / avgSpeed
+                                        if secondsRemaining < 1 { self.timeRemaining = "Done" }
+                                        else if secondsRemaining < 60 { self.timeRemaining = String(format: "%.0fs left", secondsRemaining) }
+                                        else {
+                                            let minutes = Int(secondsRemaining / 60)
+                                            let secs = Int(secondsRemaining.truncatingRemainder(dividingBy: 60))
+                                            self.timeRemaining = "\(minutes)m \(secs)s left"
+                                        }
+                                    }
+                                    
+                                    self.lastSendingUpdateTime = now
+                                    self.lastSendingBytesTransferred = offset
+                                }
+                            } else {
+                                self.lastSendingUpdateTime = now
+                                self.lastSendingBytesTransferred = offset
+                            }
+
                             // Update History
                             if let index = self.transferHistory.firstIndex(where: { $0.fileName == self.currentTransferFileName && !$0.isIncoming && $0.state == .transferring }) {
-                                self.transferHistory[index].progress = self.transferProgress
+                                self.transferHistory[index].progress = progress
                             }
                         }
                         

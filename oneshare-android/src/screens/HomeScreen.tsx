@@ -306,21 +306,33 @@ export default function HomeScreen() {
                         columnWrapperStyle={styles.row}
                         contentContainerStyle={styles.gridContent}
                         renderItem={({ item }) => {
-                            const name = item.name.toLowerCase();
-                            // console.log(`Rendering device: "${item.name}" (lower: "${name}")`); // Reduce noise
-                            const isDesktop = name.includes('mac') ||
-                                name.includes('book') ||
-                                name.includes('imac') ||
-                                name.includes('laptop') ||
-                                name.includes('desktop') ||
-                                name.includes('pc') ||
-                                name.includes('flinch') || name.includes('oneshare') || name.includes('one share');
+                            const rawName = item.name ? item.name.trim() : "Unknown";
+                            const lowerName = rawName.toLowerCase();
 
-                            // Fix Naming: Ensure we display the actual name if available, fallback only if truly unknown
-                            // If the name is exactly "Flinch" or "One Share Mac", and we have an IP, we might want to keep it?
-                            // Actually, just show whatever name we have. The issue is likely the Mac broadcasting "One Share"
-                            // But if it is "Unknown", we use "Unknown Device".
-                            const displayName = (item.name === "Unknown" || item.name === "Flinch") && item.ip ? "Mac Device" : (item.name === "Unknown" ? "Unknown Device" : item.name);
+                            // 1. Identify if it's a generic/unknown name
+                            const isGeneric = lowerName === "flinch" ||
+                                lowerName === "one share" ||
+                                lowerName === "unknown" ||
+                                lowerName === "android device" ||
+                                lowerName.includes("mac device");
+
+                            // 2. Determine Display Name
+                            // If generic and we have an IP, it's the Mac (since we are on Android scanning for Mac).
+                            let displayName = rawName;
+                            // Forced override: If we see Flinch/OneShare/Unknown with an IP, it IS the Mac.
+                            if ((isGeneric && item.ip) || (lowerName === "flinch")) {
+                                displayName = "Mac Device";
+                            } else if (rawName === "Unknown") {
+                                displayName = "Unknown Device";
+                            }
+
+                            // 3. Determine Icon based on final Display Name or original hints
+                            const isMac = displayName.toLowerCase().includes('mac') ||
+                                displayName.toLowerCase().includes('book') ||
+                                displayName.toLowerCase().includes('imac') ||
+                                displayName.toLowerCase().includes('mini') ||
+                                lowerName.includes('mac') ||
+                                lowerName.includes('desktop');
 
                             return (
                                 <TouchableOpacity
@@ -329,15 +341,15 @@ export default function HomeScreen() {
                                     activeOpacity={0.7}
                                 >
                                     <GlassContainer style={styles.card}>
-                                        <View style={styles.iconContainer}>
-                                            <Ionicons
-                                                name={isDesktop ? "desktop-outline" : "phone-portrait-outline"}
-                                                size={40}
-                                                color="#000000"
-                                            />
-                                        </View>
-                                        <View style={{ alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-                                            <Text style={[styles.deviceName, { textAlign: 'center' }]} numberOfLines={2} ellipsizeMode="tail">
+                                        <View style={styles.centeredContent}>
+                                            <View style={styles.iconContainer}>
+                                                <Ionicons
+                                                    name={isMac ? "desktop-outline" : "phone-portrait-outline"}
+                                                    size={40}
+                                                    color="#000000"
+                                                />
+                                            </View>
+                                            <Text style={styles.deviceName} numberOfLines={2} ellipsizeMode="tail">
                                                 {displayName}
                                             </Text>
                                         </View>
@@ -471,6 +483,11 @@ const styles = StyleSheet.create({
         height: 140,
         justifyContent: 'center',
     },
+    centeredContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
     iconContainer: {
         width: 64,
         height: 64,
@@ -484,7 +501,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
-        marginBottom: 4,
+        textAlign: 'center',
     },
     devicePlatform: {
         color: '#0A84FF',

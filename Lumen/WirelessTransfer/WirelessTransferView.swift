@@ -95,57 +95,62 @@ struct WirelessTransferView: View {
     
     private var deviceGridView: some View {
         ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))], spacing: 16) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 20)], spacing: 20) {
                 ForEach(wirelessState.connectedPeers) { peer in
                     deviceCard(for: peer)
                 }
             }
-            .padding()
+            .padding(24)
         }
     }
     
     private func deviceCard(for peer: Peer) -> some View {
         Button(action: {
-            if peer.isPaired {
-                // Determine if we should select for sending or just show status?
-                // Actually, UX request: "click the container and it should be clicked"
-                // If paired, maybe select it? But existing logic is specific.
-                // Request implies pairing flow: "no need to click pair, user must just click the container"
-                // So if NOT paired, clicking container -> Pair.
-                wirelessState.initiatePairing(with: peer)
-                showingPairingSheet = true
-            } else {
-                wirelessState.initiatePairing(with: peer)
+            wirelessState.initiatePairing(with: peer)
+            if !peer.isPaired {
                 showingPairingSheet = true
             }
         }) {
-            VStack(spacing: 8) {
-                // Device icon
-                Image(systemName: peer.platform == "Android" ? "phone" : "laptopcomputer") // Native symbols
-                    .font(.system(size: 40))
-                    .symbolRenderingMode(.hierarchical) // Modern look
-                    .foregroundStyle(.blue)
+            VStack(spacing: 12) {
+                // Device icon with improved styling
+                ZStack {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 80, height: 80)
+                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    
+                    Image(systemName: peer.platform == "Android" ? "phone.fill" : "laptopcomputer") 
+                        .font(.system(size: 36))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(peer.isPaired ? .green : .blue)
+                }
                 
-                Text(peer.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
+                VStack(spacing: 4) {
+                    Text(peer.name)
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
+                        .foregroundStyle(.primary)
+                    
+                    Text(peer.isPaired ? "Connected" : "Tap to Pair")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(peer.isPaired ? .green : .secondary)
+                }
             }
-            .frame(width: 110, height: 110)
-            .padding(8)
+            .frame(width: 140, height: 160)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(nsColor: .controlBackgroundColor)) // Native background
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(peer.isPaired ? Color.green.opacity(0.5) : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(peer.isPaired ? Color.green.opacity(0.3) : Color.white.opacity(0.1), lineWidth: 1)
             )
+            // Hover effect handled by ButtonStyle in SwiftUI naturally, or we can add precise onHover
+            .contentShape(Rectangle()) 
         }
-        .buttonStyle(.plain) // Remove default button button style to make it look like a card
-        .contextMenu { // Keep explicit actions available
+        .buttonStyle(.plain)
+        .contextMenu {
              if peer.isPaired {
                  Button("Send Files") { sendFilesToPeer(peer) }
              } else {
@@ -160,24 +165,33 @@ struct WirelessTransferView: View {
     // MARK: - Empty/Disabled States
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Color.blue.opacity(0.1), lineWidth: 4)
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .stroke(Color.blue.opacity(0.05), lineWidth: 4)
+                    .frame(width: 200, height: 200)
+                
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 48))
+                    .symbolEffect(.pulse.byLayer, options: .repeating)
+                    .foregroundStyle(.blue.opacity(0.6))
+            }
+            .padding(.bottom, 10)
             
-            Text("Looking for devices...")
-                .font(.headline)
+            Text("Searching for Devices...")
+                .font(.title3)
+                .fontWeight(.medium)
             
-            Text("Make sure One Share is running on your Android device")
-                .font(.caption)
+            Text("Ensure One Share is open on your Android device")
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            
-            ProgressView()
-                .scaleEffect(0.8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
     
     private var disabledStateView: some View {
@@ -198,89 +212,117 @@ struct WirelessTransferView: View {
                 wirelessState.start()
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
     
-    // MARK: - Transfer Progress
+    // MARK: - Transfer Progress (Elegant Floating Panel)
     
     private var transferProgressView: some View {
-        VStack(spacing: 12) {
-            Text(wirelessState.currentTransferFileName)
-                .font(.headline)
-                .lineLimit(1)
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "arrow.up.circle.fill") // Sending
+                    .font(.title2)
+                    .foregroundStyle(.blue)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sending File")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(wirelessState.currentTransferFileName)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Text("\(Int(wirelessState.transferProgress))%")
+                    .font(.body)
+                    .fontWeight(.bold)
+                    .monospacedDigit()
+            }
             
             ProgressView(value: wirelessState.transferProgress / 100)
                 .progressViewStyle(.linear)
+                .tint(.blue)
             
-            Text("\(Int(wirelessState.transferProgress))%")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            HStack(spacing: 12) {
-                if !wirelessState.transferSpeed.isEmpty {
-                    Label(wirelessState.transferSpeed, systemImage: "speedometer")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if !wirelessState.timeRemaining.isEmpty {
-                    Label(wirelessState.timeRemaining, systemImage: "clock")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+            HStack {
+                Label(wirelessState.transferSpeed, systemImage: "speedometer")
+                Spacer()
+                Label(wirelessState.timeRemaining, systemImage: "timer")
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.background)
-                .shadow(radius: 4)
-        )
-        .padding()
+        .padding(20)
+        .background(.regularMaterial) // Glass effect
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .padding(32)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
     
-    // MARK: - Transfer Request
+    // MARK: - Transfer Request (Elegant Notification)
     
     private var transferRequestView: some View {
-        VStack(spacing: 16) {
-            if let request = wirelessState.pendingRequest {
+        HStack(spacing: 20) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.1))
+                    .frame(width: 50, height: 50)
                 Image(systemName: "arrow.down.doc.fill")
-                    .font(.system(size: 36))
+                    .font(.title3)
                     .foregroundStyle(.blue)
-                
+            }
+            
+            // Info
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Incoming File")
                     .font(.headline)
                 
-                Text(request.fileName)
+                Text(wirelessState.pendingRequest?.fileName ?? "Unknown File")
+                    .font(.subheadline)
+                    .lineLimit(1)
+                
+                Text(formatBytes(wirelessState.pendingRequest?.fileSize ?? 0))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
-                Text(formatBytes(request.fileSize))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                
-                HStack(spacing: 16) {
-                    Button("Decline") {
-                        wirelessState.declineTransfer()
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    Button("Accept") {
-                        wirelessState.acceptTransfer()
-                    }
-                    .buttonStyle(.borderedProminent)
+            }
+            
+            Spacer()
+            
+            // Actions
+            HStack(spacing: 12) {
+                Button(action: { wirelessState.declineTransfer() }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(.gray.opacity(0.2)))
                 }
+                .buttonStyle(.plain)
+                
+                Button(action: { wirelessState.acceptTransfer() }) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color.blue))
+                }
+                .buttonStyle(.plain)
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.background)
-                .shadow(radius: 4)
+        .padding(20)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(.white.opacity(0.2), lineWidth: 1)
         )
-        .padding()
+        .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
+        .padding(32)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
     
     // MARK: - Actions
@@ -305,27 +347,45 @@ struct PairingSheetView: View {
     @FocusState private var isFieldFocused: Bool
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 30) {
             if pairingManager.isPairing {
                 // Show code to enter on other device
-                Text("Enter this code on the other device")
-                    .font(.headline)
+                VStack(spacing: 12) {
+                    Image(systemName: "lock.laptopcomputer")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.blue)
+                    
+                    Text("Enter this code on the other device")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                }
                 
                 Text(pairingManager.pairingCode)
                     .font(.system(size: 48, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.primary)
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                    )
                     .textSelection(.enabled) // Allow copying
                 
             } else if pairingManager.isInitiatingPairing {
                 // Enter code from other device
-                Text("Enter code from device")
-                    .font(.headline)
+                VStack(spacing: 12) {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.blue)
+                    
+                    Text("Enter Pairing Code")
+                        .font(.headline)
+                }
                 
                 TextField("0000", text: $pairingManager.inputCode)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 24, design: .monospaced))
+                    .font(.system(size: 32, weight: .semibold, design: .monospaced))
                     .multilineTextAlignment(.center)
-                    .frame(width: 120)
+                    .frame(width: 160)
                     .focused($isFieldFocused) // Auto-focus
                     .onSubmit { // Enter key support
                         if pairingManager.inputCode.count >= 4 {
@@ -346,6 +406,7 @@ struct PairingSheetView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(pairingManager.inputCode.count < 4)
                 .keyboardShortcut(.defaultAction) // Enter key support for button
             }
@@ -354,9 +415,11 @@ struct PairingSheetView: View {
                 pairingManager.reset()
                 dismiss()
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
         }
-        .padding(32)
-        .frame(width: 300, height: 250)
+        .padding(40)
+        .frame(width: 350)
+        .background(.ultraThinMaterial)
     }
 }
