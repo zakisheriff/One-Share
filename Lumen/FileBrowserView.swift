@@ -1177,6 +1177,14 @@ struct FileBrowserView: View {
         .contextMenu {
             fileContextMenu(for: item)
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(
+                    key: ItemFramePreferenceKey.self,
+                    value: [item.id: geo.frame(in: .named("marqueeSpace"))]
+                )
+            }
+        )
     }
     
     private var fileListView: some View {
@@ -1237,6 +1245,14 @@ struct FileBrowserView: View {
         .contextMenu {
             fileContextMenu(for: item)
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(
+                    key: ItemFramePreferenceKey.self,
+                    value: [item.id: geo.frame(in: .named("marqueeSpace"))]
+                )
+            }
+        )
     }
     
     // MARK: - Marquee Selection
@@ -1330,6 +1346,12 @@ struct FileBrowserView: View {
     
     @ViewBuilder
     private func fileContextMenu(for item: FileSystemItem) -> some View {
+        Button("Open") {
+            handleDoubleClick(on: item)
+        }
+        
+        Divider()
+        
         Button("Copy") {
             // If this item is in the selection, copy all selected items
             // Otherwise, just copy this item
