@@ -9,6 +9,15 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+// MARK: - Preference Key for Item Frames (Marquee Selection)
+struct ItemFramePreferenceKey: PreferenceKey {
+    static var defaultValue: [UUID: CGRect] = [:]
+    
+    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
 struct FileBrowserView: View {
     let title: String
     let fileService: FileService
@@ -39,6 +48,13 @@ struct FileBrowserView: View {
     // Auto-refresh state
     @State private var isAutoRefreshing: Bool = false
     @State private var connectionState: ConnectionState = .disconnected
+    
+    // MARK: - Marquee Selection State
+    @State private var isDraggingMarquee: Bool = false
+    @State private var marqueeStart: CGPoint = .zero
+    @State private var marqueeEnd: CGPoint = .zero
+    @State private var itemFrames: [UUID: CGRect] = [:]
+    @State private var selectionBeforeDrag: Set<UUID> = []
     
     // Computed properties for path display and navigation
     private var canNavigateUp: Bool {
@@ -414,14 +430,8 @@ struct FileBrowserView: View {
             return
         }
         
-        // For media files, open them with the default application
-        switch item.type {
-        case .image, .video, .audio:
-            openFileWithDefaultApp(item)
-        default:
-            // For other file types, navigate (which will show an error for non-folders)
-            navigate(to: item)
-        }
+        // For all files, open them with the default application for preview
+        openFileWithDefaultApp(item)
     }
     
     // Open a file with the default application
@@ -430,9 +440,9 @@ struct FileBrowserView: View {
         print("Opening file with default app: \(item.path)")
 #endif
         
-        if item.path.hasPrefix("mtp://") {
-            // For MTP files, we need to download them first
-            downloadAndOpenMTPFile(item)
+        if item.path.hasPrefix("mtp://") || item.path.hasPrefix("ios://") || fileService is iOSDeviceService {
+            // For remote files (MTP/iOS), download to temp first then open
+            downloadAndOpenRemoteFile(item)
         } else {
             // For local files, open directly
             let url = URL(fileURLWithPath: item.path)
@@ -440,10 +450,40 @@ struct FileBrowserView: View {
         }
     }
     
-    // Download an MTP file and open it
-    private func downloadAndOpenMTPFile(_ item: FileSystemItem) {
-        // TODO: Implement MTP file download and opening
-        print("Download and open MTP file: \(item.path)")
+    // Download a remote file (MTP/iOS) and open it
+    private func downloadAndOpenRemoteFile(_ item: FileSystemItem) {
+        // Show loading indicator
+        isLoading = true
+        
+        Task {
+            do {
+                // Create temp directory for preview files
+                let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("OneSharePreview", isDirectory: true)
+                try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+                
+                // Create destination path with original filename
+                let destinationURL = tempDir.appendingPathComponent(item.name)
+                
+                // Remove existing file if present
+                try? FileManager.default.removeItem(at: destinationURL)
+                
+                // Download the file
+                try await fileService.downloadFile(at: item.path, to: destinationURL, size: item.size) { progress, status in
+                    // Progress updates handled by download
+                }
+                
+                // Open with default app on main thread
+                await MainActor.run {
+                    isLoading = false
+                    NSWorkspace.shared.open(destinationURL)
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = "Failed to preview file: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     // Clipboard
@@ -1044,22 +1084,54 @@ struct FileBrowserView: View {
     }
     
     private var fileItemsView: some View {
-        Group {
-            if isGridView {
-                fileGridView
-            } else {
-                fileListView
+        ScrollView {
+            ZStack(alignment: .topLeading) {
+                // Content (grid or list)
+                Group {
+                    if isGridView {
+                        fileGridView
+                    } else {
+                        fileListView
+                    }
+                }
+                
+                // Marquee selection overlay
+                if isDraggingMarquee {
+                    marqueeRectangle
+                }
+            }
+            .coordinateSpace(name: "marqueeSpace")
+            .onPreferenceChange(ItemFramePreferenceKey.self) { frames in
+                itemFrames = frames
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Click on empty space deselects all
+            if !selection.isEmpty {
+                selection.removeAll()
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 10, coordinateSpace: .local)
+                .onChanged { value in
+                    handleMarqueeDrag(value: value, modifiers: NSEvent.modifierFlags)
+                }
+                .onEnded { _ in
+                    finishMarqueeSelection()
+                }
+        )
     }
     
     private var fileGridView: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 20) {
-            ForEach(filteredAndSortedItems) { item in
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 16) {
+            ForEach(filteredAndSortedItems, id: \.id) { item in
                 fileGridItem(item)
+                    .id(item.id) // Stable identity for performance
             }
         }
         .padding()
+        .animation(.none, value: cachedFilteredItems.count) // Reduce animation overhead
     }
     
     // Check if this is a remote file (MTP or iOS)
@@ -1072,103 +1144,29 @@ struct FileBrowserView: View {
     private func fileGridItem(_ item: FileSystemItem) -> some View {
         let isSelected = selection.contains(item.id)
         
-        return VStack(spacing: 8) {
-            // Icon with drawing group for performance
-            Group {
-                if isRemoteFileService {
-                    IconHelper.sfSymbolIcon(for: item)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: iconSize, height: iconSize)
-                        .foregroundStyle(IconHelper.iconColor(for: item))
-                } else {
-                    IconHelper.nativeIcon(for: item)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: iconSize, height: iconSize)
-                }
+        return VStack(spacing: 6) {
+            // Icon - simplified for performance
+            if isRemoteFileService {
+                IconHelper.sfSymbolIcon(for: item)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
+                    .foregroundStyle(IconHelper.iconColor(for: item))
+            } else {
+                IconHelper.nativeIcon(for: item)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
             }
-            .drawingGroup() // Flatten icon rendering for performance
             
             Text(item.name)
-                .font(.system(.caption, design: .rounded))
+                .font(.caption)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .foregroundColor(.primary)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture(count: 2) {
-            handleDoubleClick(on: item)
-        }
-        .simultaneousGesture(TapGesture().onEnded {
-            handleSelection(for: item)
-        })
-        .contextMenu {
-            fileContextMenu(for: item)
-        }
-        .onDrag {
-            createItemProvider(for: item)
-        }
-    }
-    
-    private var fileListView: some View {
-        LazyVStack(spacing: 4) {
-            ForEach(filteredAndSortedItems) { item in
-                fileListItem(item)
-            }
-        }
-        .padding(.horizontal)
-    }
-    
-    private func fileListItem(_ item: FileSystemItem) -> some View {
-        let isSelected = selection.contains(item.id)
-        
-        return HStack(spacing: 12) {
-            // Icon with drawing group for performance
-            Group {
-                if isRemoteFileService {
-                    IconHelper.sfSymbolIcon(for: item)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                        .foregroundStyle(IconHelper.iconColor(for: item))
-                } else {
-                    IconHelper.nativeIcon(for: item)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                }
-            }
-            .drawingGroup()
-            
-            Text(item.name)
-                .font(.system(.body, design: .rounded))
-                .lineLimit(1)
-                .foregroundColor(.primary)
-            
-            Spacer()
-            
-            Text(item.formattedSize)
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
-                .frame(width: 60, alignment: .trailing)
-            
-            Text(item.formattedDate)
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
-                .frame(width: 100, alignment: .trailing)
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
-        )
+        .frame(width: 90)
+        .padding(8)
+        .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
@@ -1179,9 +1177,155 @@ struct FileBrowserView: View {
         .contextMenu {
             fileContextMenu(for: item)
         }
-        .onDrag {
-            createItemProvider(for: item)
+    }
+    
+    private var fileListView: some View {
+        LazyVStack(spacing: 2) {
+            ForEach(filteredAndSortedItems, id: \.id) { item in
+                fileListItem(item)
+                    .id(item.id) // Stable identity for performance
+            }
         }
+        .padding(.horizontal)
+        .animation(.none, value: cachedFilteredItems.count)
+    }
+    
+    private func fileListItem(_ item: FileSystemItem) -> some View {
+        let isSelected = selection.contains(item.id)
+        
+        return HStack(spacing: 10) {
+            // Icon - simplified
+            if isRemoteFileService {
+                IconHelper.sfSymbolIcon(for: item)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundStyle(IconHelper.iconColor(for: item))
+            } else {
+                IconHelper.nativeIcon(for: item)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+            }
+            
+            Text(item.name)
+                .font(.callout)
+                .lineLimit(1)
+            
+            Spacer()
+            
+            Text(item.formattedSize)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 55, alignment: .trailing)
+            
+            Text(item.formattedDate)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 95, alignment: .trailing)
+        }
+        .padding(.vertical, 5)
+        .padding(.horizontal, 10)
+        .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            handleDoubleClick(on: item)
+        }
+        .simultaneousGesture(TapGesture().onEnded {
+            handleSelection(for: item)
+        })
+        .contextMenu {
+            fileContextMenu(for: item)
+        }
+    }
+    
+    // MARK: - Marquee Selection
+    
+    /// The normalized rectangle for the marquee selection (handles any drag direction)
+    private var normalizedMarqueeRect: CGRect {
+        let x = min(marqueeStart.x, marqueeEnd.x)
+        let y = min(marqueeStart.y, marqueeEnd.y)
+        let width = abs(marqueeEnd.x - marqueeStart.x)
+        let height = abs(marqueeEnd.y - marqueeStart.y)
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+    
+    /// Semi-transparent selection rectangle view
+    private var marqueeRectangle: some View {
+        let rect = normalizedMarqueeRect
+        return RoundedRectangle(cornerRadius: 4)
+            .fill(Color.accentColor.opacity(0.15))
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.accentColor.opacity(0.6), lineWidth: 1)
+            )
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+            .allowsHitTesting(false)
+    }
+    
+    /// Handle drag gesture for marquee selection
+    private func handleMarqueeDrag(value: DragGesture.Value, modifiers: NSEvent.ModifierFlags) {
+        // Start marquee if not already dragging
+        if !isDraggingMarquee {
+            isDraggingMarquee = true
+            marqueeStart = value.startLocation
+            
+            // Store current selection for modifier key behavior
+            if modifiers.contains(.shift) || modifiers.contains(.command) {
+                selectionBeforeDrag = selection
+            } else {
+                selectionBeforeDrag = []
+                selection = []
+            }
+        }
+        
+        // Update end point
+        marqueeEnd = value.location
+        
+        // Calculate which items intersect the marquee
+        updateMarqueeSelection(modifiers: modifiers)
+    }
+    
+    /// Update selection based on which items intersect the marquee rectangle
+    private func updateMarqueeSelection(modifiers: NSEvent.ModifierFlags) {
+        let marqueeRect = normalizedMarqueeRect
+        
+        // Find items that intersect with marquee
+        var intersectingIds: Set<UUID> = []
+        for (id, frame) in itemFrames {
+            if marqueeRect.intersects(frame) {
+                intersectingIds.insert(id)
+            }
+        }
+        
+        // Apply selection based on modifier keys
+        if modifiers.contains(.command) {
+            // Cmd: Toggle selection
+            var newSelection = selectionBeforeDrag
+            for id in intersectingIds {
+                if newSelection.contains(id) {
+                    newSelection.remove(id)
+                } else {
+                    newSelection.insert(id)
+                }
+            }
+            selection = newSelection
+        } else if modifiers.contains(.shift) {
+            // Shift: Add to selection
+            selection = selectionBeforeDrag.union(intersectingIds)
+        } else {
+            // No modifier: Replace selection
+            selection = intersectingIds
+        }
+    }
+    
+    /// Finish marquee selection when drag ends
+    private func finishMarqueeSelection() {
+        isDraggingMarquee = false
+        marqueeStart = .zero
+        marqueeEnd = .zero
+        selectionBeforeDrag = []
     }
     
     @ViewBuilder
