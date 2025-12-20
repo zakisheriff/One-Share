@@ -2,7 +2,7 @@
 //  WirelessTransferState.swift
 //  One Share
 //
-//  Integrates Flinch wireless transfer into One Share
+//  Integrates One Share wireless transfer into One Share
 //
 
 import SwiftUI

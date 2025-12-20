@@ -1,4 +1,4 @@
-package com.flinch.modules
+package com.oneshare.modules
 
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
@@ -27,7 +27,7 @@ import java.net.Socket
 import java.util.UUID
 import java.util.concurrent.Executors
 
-class FlinchNetworkModule(reactContext: ReactApplicationContext) :
+class OneShareNetworkModule(reactContext: ReactApplicationContext) :
         ReactContextBaseJavaModule(reactContext) {
     private val executor = Executors.newCachedThreadPool()
     private var tcpSocket: Socket? = null
@@ -37,7 +37,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
     private val pendingSockets = java.util.concurrent.ConcurrentHashMap<String, Socket>()
 
     override fun getName(): String {
-        return "FlinchNetwork"
+        return "OneShareNetwork"
     }
 
     @ReactMethod
@@ -137,8 +137,6 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
         }
     }
 
-    // ... (existing code)
-
     @ReactMethod
     fun sendPairingInitiation(ip: String, port: Int, promise: Promise) {
         executor.execute {
@@ -168,7 +166,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
     private fun handleIncomingConnection(socket: Socket) {
         executor.execute {
             try {
-                android.util.Log.d("FlinchNetwork", "New incoming connection accepted")
+                android.util.Log.d("OneShareNetwork", "New incoming connection accepted")
                 val inputStream = socket.getInputStream()
 
                 // Read Header
@@ -204,7 +202,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                             remotePort = split[1].toIntOrNull() ?: 0
                         }
                         android.util.Log.d(
-                                "FlinchNetwork",
+                                "OneShareNetwork",
                                 "Pairing Request received from Port: $remotePort"
                         )
                     } else if (data.contains("PAIR_VERIFY::") &&
@@ -223,21 +221,21 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
 
                             headerParsed = true
                             android.util.Log.d(
-                                    "FlinchNetwork",
+                                    "OneShareNetwork",
                                     "Pairing Verify received: $pairingCode, Port: $remotePort"
                             )
                         }
                     } else if (data.contains("::") &&
                                     data.indexOf("::", data.indexOf("::") + 2) != -1
                     ) {
-                        android.util.Log.d("FlinchNetwork", "Header delimiter found: $data")
+                        android.util.Log.d("OneShareNetwork", "Header delimiter found: $data")
                         val parts = data.split("::")
                         if (parts.size >= 2) {
                             fileName = parts[0]
                             fileSize = parts[1].toLongOrNull() ?: 0L
                             headerParsed = true
                             android.util.Log.d(
-                                    "FlinchNetwork",
+                                    "OneShareNetwork",
                                     "Header parsed: $fileName, $fileSize"
                             )
                         }
@@ -245,7 +243,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                 }
 
                 if (!headerParsed) {
-                    android.util.Log.e("FlinchNetwork", "Header parsing failed or timed out")
+                    android.util.Log.e("OneShareNetwork", "Header parsing failed or timed out")
                     socket.close()
                     return@execute
                 }
@@ -258,7 +256,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                     val params = com.facebook.react.bridge.Arguments.createMap()
                     params.putString("requestId", requestId)
                     params.putInt("remotePort", remotePort) // Pass port just in case
-                    sendEvent("Flinch:PairingRequest", params)
+                    sendEvent("OneShare:PairingRequest", params)
                 } else if (isPairingVerify) {
                     val params = com.facebook.react.bridge.Arguments.createMap()
                     params.putString("requestId", requestId)
@@ -266,19 +264,19 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                     val remoteIp = socket.inetAddress.hostAddress
                     params.putString("remoteIp", remoteIp)
                     params.putInt("remotePort", remotePort) // Add port to event
-                    sendEvent("Flinch:PairingVerify", params)
+                    sendEvent("OneShare:PairingVerify", params)
                 } else {
                     // Emit Request Event
                     val params = com.facebook.react.bridge.Arguments.createMap()
                     params.putString("requestId", requestId)
                     params.putString("fileName", fileName)
                     params.putString("fileSize", fileSize.toString())
-                    sendEvent("Flinch:TransferRequest", params)
-                    android.util.Log.d("FlinchNetwork", "Emitted TransferRequest: $requestId")
+                    sendEvent("OneShare:TransferRequest", params)
+                    android.util.Log.d("OneShareNetwork", "Emitted TransferRequest: $requestId")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                android.util.Log.e("FlinchNetwork", "Error in handleIncomingConnection", e)
+                android.util.Log.e("OneShareNetwork", "Error in handleIncomingConnection", e)
                 try {
                     socket.close()
                 } catch (ignore: Exception) {}
@@ -419,7 +417,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                     params.putString("received", totalReceived.toString())
                     params.putString("total", fileSize.toString())
                     params.putString("fileName", fileName)
-                    sendEvent("Flinch:TransferProgress", params)
+                    sendEvent("OneShare:TransferProgress", params)
                     lastUpdate = now
                 }
 
@@ -445,7 +443,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
             params.putString("filePath", file!!.absolutePath)
             params.putString("fileName", file!!.name)
             params.putString("message", "Saved to ${file!!.absolutePath}")
-            sendEvent("Flinch:FileReceived", params)
+            sendEvent("OneShare:FileReceived", params)
         } catch (e: Exception) {
             e.printStackTrace()
             val msg = e.message?.lowercase() ?: ""
@@ -456,16 +454,16 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                                     msg.contains("closed"))
             ) {
                 android.util.Log.d(
-                        "FlinchNetwork",
+                        "OneShareNetwork",
                         "Transfer cancelled by sender (Connection Reset)"
                 )
                 // Emit a specific Cancelled event if needed, or just don't emit Error
                 // For now, let's just NOT emit FileError so the UI doesn't show a scary alert.
                 // We can emit a "TransferCancelled" event to close the modal cleanly.
-                sendEvent("Flinch:TransferCancelled", null)
+                sendEvent("OneShare:TransferCancelled", null)
             } else {
                 if (activeSocket != null) { // Only emit error if not intentionally cancelled by us
-                    sendEvent("Flinch:FileError", e.message ?: "Unknown error")
+                    sendEvent("OneShare:FileError", e.message ?: "Unknown error")
                 }
             }
 
@@ -718,7 +716,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
             try {
                 val socket = Socket(ip, port)
                 activeSocket = socket // Track active socket
-                android.util.Log.d("FlinchNetwork", "Connecting to $ip:$port for file transfer")
+                android.util.Log.d("OneShareNetwork", "Connecting to $ip:$port for file transfer")
 
                 val outputStream = socket.getOutputStream()
                 val inputStream = socket.getInputStream()
@@ -758,7 +756,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                 }
 
                 android.util.Log.d(
-                        "FlinchNetwork",
+                        "OneShareNetwork",
                         "Sending file: $fileName, Size: $fileSize, Path: $fileUri"
                 )
 
@@ -806,7 +804,7 @@ class FlinchNetworkModule(reactContext: ReactApplicationContext) :
                         params.putDouble("progress", progress)
                         params.putString("sent", totalSent.toString())
                         params.putString("total", fileSize.toString())
-                        sendEvent("Flinch:TransferProgress", params) // Unified event name
+                        sendEvent("OneShare:TransferProgress", params) // Unified event name
                         lastUpdate = now
                     }
 

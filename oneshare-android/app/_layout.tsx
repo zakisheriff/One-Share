@@ -76,15 +76,15 @@ function RootLayoutNav() {
   };
 
   useEffect(() => {
-    const eventEmitter = new NativeEventEmitter(NativeModules.FlinchNetwork);
+    const eventEmitter = new NativeEventEmitter(NativeModules.OneShareNetwork);
 
-    const pairingRequestSub = eventEmitter.addListener('Flinch:PairingRequest', (event: any) => {
+    const pairingRequestSub = eventEmitter.addListener('OneShare:PairingRequest', (event: any) => {
       console.log("Received Pairing Request:", event);
       setPairingRequest({ requestId: event.requestId, remotePort: event.remotePort });
       setPairingVisible(true);
     });
 
-    const transferRequestSub = eventEmitter.addListener('Flinch:TransferRequest', (event: any) => {
+    const transferRequestSub = eventEmitter.addListener('OneShare:TransferRequest', (event: any) => {
       console.log("Received Transfer Request:", event);
       // Auto-accept incoming transfers
       TransferService.resolveTransferRequest(event.requestId, true, event.fileName, event.fileSize);
@@ -97,7 +97,7 @@ function RootLayoutNav() {
       });
     });
 
-    const transferProgressSub = eventEmitter.addListener('Flinch:TransferProgress', (event: any) => {
+    const transferProgressSub = eventEmitter.addListener('OneShare:TransferProgress', (event: any) => {
       setTransferState(prev => ({
         ...prev,
         visible: true,
@@ -107,16 +107,16 @@ function RootLayoutNav() {
       }));
     });
 
-    const transferCancelledSub = eventEmitter.addListener('Flinch:TransferCancelled', () => {
+    const transferCancelledSub = eventEmitter.addListener('OneShare:TransferCancelled', () => {
       setTransferState(prev => ({ ...prev, visible: false }));
     });
 
-    const fileReceivedSub = eventEmitter.addListener('Flinch:FileReceived', (event: any) => {
+    const fileReceivedSub = eventEmitter.addListener('OneShare:FileReceived', (event: any) => {
       setTransferState(prev => ({ ...prev, visible: false }));
       showAlert("File Received", `Saved to Downloads: ${event.fileName}`, "success");
     });
 
-    const fileErrorSub = eventEmitter.addListener('Flinch:FileError', (event: any) => {
+    const fileErrorSub = eventEmitter.addListener('OneShare:FileError', (event: any) => {
       setTransferState(prev => ({ ...prev, visible: false }));
       showAlert("Transfer Error", event.message || "Unknown error", "error");
     });
@@ -199,7 +199,7 @@ function PairingModalController({ visible, requestId, remotePort, onClose, onSuc
     setCode(newCode);
 
     const eventEmitter = new NativeEventEmitter(NativeModules.FlinchNetwork);
-    const sub = eventEmitter.addListener('Flinch:PairingVerify', (data: any) => {
+    const sub = eventEmitter.addListener('OneShare:PairingVerify', (data: any) => {
       console.log("Verifying code:", data.code, "Expected:", newCode);
       if (data.code === newCode) {
         // Success!

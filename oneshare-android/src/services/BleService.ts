@@ -1,7 +1,7 @@
 import { BleManager } from 'react-native-ble-plx';
 import { NativeModules } from 'react-native';
 
-const FlinchNetwork = NativeModules.FlinchNetwork || {
+const OneShareNetwork = NativeModules.OneShareNetwork || {
     getServerInfo: async () => { console.warn("MOCK: getServerInfo"); return { ip: "127.0.0.1", port: 9999 }; },
     startBleAdvertisingWithPayload: async () => { console.warn("MOCK: startBleAdvertisingWithPayload"); return "Started"; },
     startServer: async () => { console.warn("MOCK: startServer"); return "127.0.0.1:9999"; },
@@ -32,10 +32,10 @@ class BleServiceInstance {
 
     async startAdvertising(uuid: string, name: string): Promise<void> {
         try {
-            const serverInfo = await FlinchNetwork.getServerInfo();
+            const serverInfo = await OneShareNetwork.getServerInfo();
             const { ip, port } = serverInfo;
             console.log(`Starting BLE Advertising with IP: ${ip}, Port: ${port}`);
-            return FlinchNetwork.startBleAdvertisingWithPayload(uuid, ip, port);
+            return OneShareNetwork.startBleAdvertisingWithPayload(uuid, ip, port);
         } catch (error) {
             console.log("Failed to get server info for advertising, trying fallback or failing:", error);
             // If server not started, maybe we should start it?
@@ -59,13 +59,13 @@ class BleServiceInstance {
             // If `getServerInfo` fails, it means server is not running.
             // We should start it.
             try {
-                const address = await FlinchNetwork.startServer();
+                const address = await OneShareNetwork.startServer();
                 console.log("Server started at:", address);
                 // address is "IP:Port"
                 const parts = address.split(":");
                 const ip = parts[0];
                 const port = parseInt(parts[1]);
-                return FlinchNetwork.startBleAdvertisingWithPayload(uuid, ip, port);
+                return OneShareNetwork.startBleAdvertisingWithPayload(uuid, ip, port);
             } catch (err) {
                 console.error("Failed to start server and advertise:", err);
                 throw err;
@@ -74,7 +74,7 @@ class BleServiceInstance {
     }
 
     async stopAdvertising(): Promise<void> {
-        return FlinchNetwork.stopBleAdvertising();
+        return OneShareNetwork.stopBleAdvertising();
     }
 }
 

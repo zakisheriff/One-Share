@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 
-const FlinchNetwork = NativeModules.FlinchNetwork || {
+const OneShareNetwork = NativeModules.OneShareNetwork || {
     connectToHost: async () => { console.warn("MOCK: connectToHost"); return "Connected"; },
     sendFileTCP: async () => { console.warn("MOCK: sendFileTCP"); return "Sent"; },
     startBleAdvertising: async () => { console.warn("MOCK: startBleAdvertising"); return "Started"; },
@@ -15,7 +15,7 @@ const FlinchNetwork = NativeModules.FlinchNetwork || {
     resolvePairingRequest: async () => { console.warn("MOCK: resolvePairingRequest"); }
 };
 
-interface FlinchNetworkInterface {
+interface OneShareNetworkInterface {
     connectToHost(ip: string, port: number): Promise<string>;
     sendFileUDP(ip: string, port: number, filePath: string): Promise<string>;
     sendFileTCP(ip: string, port: number, filePath: string): Promise<string>;
@@ -34,7 +34,7 @@ interface FlinchNetworkInterface {
 export const TransferService = {
     connect: async (ip: string, port: number): Promise<boolean> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).connectToHost(ip, port);
+            const result = await (OneShareNetwork as OneShareNetworkInterface).connectToHost(ip, port);
             return result === "Connected";
         } catch (error) {
             console.error("Connection failed", error);
@@ -45,7 +45,7 @@ export const TransferService = {
     sendFile: async (ip: string, port: number, filePath: string): Promise<"SUCCESS" | "FAILED" | "CANCELLED" | "DECLINED"> => {
         try {
             // Use TCP for reliability with Mac Server
-            const result = await (FlinchNetwork as FlinchNetworkInterface).sendFileTCP(ip, port, filePath);
+            const result = await (OneShareNetwork as OneShareNetworkInterface).sendFileTCP(ip, port, filePath);
             return result === "Sent" ? "SUCCESS" : "FAILED";
         } catch (error: any) {
             if (error?.code === "CANCELLED" || error?.message?.includes("cancelled")) {
@@ -64,7 +64,7 @@ export const TransferService = {
 
     cancelTransfer: async (): Promise<boolean> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).cancelTransfer();
+            const result = await (OneShareNetwork as OneShareNetworkInterface).cancelTransfer();
             console.log("Transfer cancelled:", result);
             return true;
         } catch (error) {
@@ -75,7 +75,7 @@ export const TransferService = {
 
     startAdvertising: async (uuid: string, name: string): Promise<boolean> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).startBleAdvertising(uuid, name);
+            const result = await (OneShareNetwork as OneShareNetworkInterface).startBleAdvertising(uuid, name);
             console.log("Advertising started:", result);
             return true;
         } catch (error) {
@@ -86,7 +86,7 @@ export const TransferService = {
 
     stopAdvertising: async (): Promise<boolean> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).stopBleAdvertising();
+            const result = await (OneShareNetwork as OneShareNetworkInterface).stopBleAdvertising();
             console.log("Advertising stopped:", result);
             return true;
         } catch (error) {
@@ -97,7 +97,7 @@ export const TransferService = {
 
     startServer: async (): Promise<string> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).startServer();
+            const result = await (OneShareNetwork as OneShareNetworkInterface).startServer();
             return result;
         } catch (error) {
             console.error("Start server failed:", error);
@@ -107,7 +107,7 @@ export const TransferService = {
 
     initiatePairing: async (ip: string, port: number): Promise<boolean> => {
         try {
-            const result = await (FlinchNetwork as FlinchNetworkInterface).sendPairingInitiation(ip, port);
+            const result = await (OneShareNetwork as OneShareNetworkInterface).sendPairingInitiation(ip, port);
             return result === "INITIATED";
         } catch (error) {
             console.error("Pairing initiation failed:", error);
@@ -117,7 +117,7 @@ export const TransferService = {
 
     resolvePairingRequest: async (requestId: string, success: boolean): Promise<void> => {
         try {
-            await (FlinchNetwork as FlinchNetworkInterface).resolvePairingRequest(requestId, success);
+            await (OneShareNetwork as OneShareNetworkInterface).resolvePairingRequest(requestId, success);
         } catch (error) {
             console.error("Resolve pairing request failed:", error);
             throw error;
@@ -127,11 +127,11 @@ export const TransferService = {
     startBleAdvertisingWithPayload: async (uuid: string, ip: string, port: number): Promise<boolean> => {
         try {
             // Check if method exists on native module (it might not if not rebuilt)
-            if (!(FlinchNetwork as any).startBleAdvertisingWithPayload) {
+            if (!(OneShareNetwork as any).startBleAdvertisingWithPayload) {
                 console.error("startBleAdvertisingWithPayload not found on native module");
                 return false;
             }
-            const result = await (FlinchNetwork as any).startBleAdvertisingWithPayload(uuid, ip, port);
+            const result = await (OneShareNetwork as any).startBleAdvertisingWithPayload(uuid, ip, port);
             console.log("Advertising with payload started:", result);
             return true;
         } catch (error) {
@@ -142,7 +142,7 @@ export const TransferService = {
 
     resolveTransferRequest: async (requestId: string, accept: boolean, fileName: string, fileSizeStr: string): Promise<boolean> => {
         try {
-            await (FlinchNetwork as FlinchNetworkInterface).resolveTransferRequestWithMetadata(requestId, accept, fileName, fileSizeStr);
+            await (OneShareNetwork as OneShareNetworkInterface).resolveTransferRequestWithMetadata(requestId, accept, fileName, fileSizeStr);
             return true;
         } catch (error) {
             console.error("Resolve request failed:", error);
@@ -152,7 +152,7 @@ export const TransferService = {
 
     openFile: async (filePath: string): Promise<void> => {
         try {
-            await (FlinchNetwork as FlinchNetworkInterface).openFile(filePath);
+            await (OneShareNetwork as OneShareNetworkInterface).openFile(filePath);
         } catch (error) {
             console.error("Open file failed:", error);
             throw error;
@@ -177,7 +177,7 @@ export const TransferService = {
             // I'll add 'sendPairingRequest' to FlinchNetworkModule.kt.
 
             // For now, I'll define the interface here.
-            const result = await (FlinchNetwork as any).sendPairingRequest(ip, port, code);
+            const result = await (OneShareNetwork as any).sendPairingRequest(ip, port, code);
             return result === "PAIRED";
         } catch (error) {
             console.error("Pairing failed:", error);

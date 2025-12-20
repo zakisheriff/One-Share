@@ -41,14 +41,14 @@ export default function RecentScreen() {
 
     // Listeners
     useEffect(() => {
-        const eventEmitter = new NativeEventEmitter(NativeModules.FlinchNetwork);
+        const eventEmitter = new NativeEventEmitter(NativeModules.OneShareNetwork);
 
         // Start Advertising so Mac can discover us
         BleService.startAdvertising("12345678-1234-1234-1234-1234567890AB", "Flinch Android")
             .then(() => console.log("Advertising started"))
             .catch(err => console.log("Advertising error:", err));
 
-        const fileSub = eventEmitter.addListener('Flinch:FileReceived', (data: any) => {
+        const fileSub = eventEmitter.addListener('OneShare:FileReceived', (data: any) => {
             console.log("File Received in RecentScreen:", data);
 
             let fileName = "";
@@ -67,7 +67,7 @@ export default function RecentScreen() {
             }
         });
 
-        const progressSub = eventEmitter.addListener('Flinch:TransferProgress', (data: any) => {
+        const progressSub = eventEmitter.addListener('OneShare:TransferProgress', (data: any) => {
             setTransferProgress(Math.round(data.progress));
         });
 

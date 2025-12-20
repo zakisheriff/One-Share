@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "flinch-android",
-    "slug": "flinch-android",
+    "slug": "oneshare-android",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

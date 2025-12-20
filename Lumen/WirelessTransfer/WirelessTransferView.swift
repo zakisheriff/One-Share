@@ -163,7 +163,7 @@ struct WirelessTransferView: View {
             Text("Looking for devices...")
                 .font(.headline)
             
-            Text("Make sure Flinch is running on your Android device")
+            Text("Make sure One Share is running on your Android device")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -48,7 +48,7 @@ export default function HomeScreen() {
 
     useEffect(() => {
         // Start Advertising so Mac can discover us even on Home Screen
-        BleService.startAdvertising(SERVICE_UUID, "Flinch Android")
+        BleService.startAdvertising(SERVICE_UUID, "One Share Android")
             .then(() => {
                 console.log("HomeScreen: Advertising started");
                 // Auto-start scanning
@@ -128,7 +128,7 @@ export default function HomeScreen() {
 
                 // Check if it matches our service UUID OR has the name "Flinch"
                 const isFlinch = (device.serviceUUIDs && device.serviceUUIDs.includes(SERVICE_UUID)) ||
-                    (deviceName && deviceName.includes("Flinch"));
+                    (deviceName && (deviceName.includes("Flinch") || deviceName.includes("One Share")));
 
                 if (isFlinch) {
                     // Parse Service Data for IP/Port
@@ -163,10 +163,10 @@ export default function HomeScreen() {
                             };
                             return updated;
                         } else {
-                            console.log("Found Flinch Device:", deviceName, device.id);
+                            console.log("Found One Share Device:", deviceName, device.id);
                             return [...prev, {
                                 id: device.id,
-                                name: deviceName === "Unknown" ? "Flinch Mac" : deviceName,
+                                name: deviceName === "Unknown" ? "One Share Mac" : deviceName,
                                 originalDevice: device,
                                 lastSeen: now,
                                 ip: ip,
@@ -295,7 +295,7 @@ export default function HomeScreen() {
                             <View style={[styles.radarRing, { width: 160, height: 160 }]} />
                         </View>
                         <Text style={styles.emptyText}>Scanning for devices...</Text>
-                        <Text style={styles.emptySubText}>Make sure Flinch is open on your other device.</Text>
+                        <Text style={styles.emptySubText}>Make sure One Share is open on your other device.</Text>
                     </View>
 
                 ) : (
@@ -314,7 +314,7 @@ export default function HomeScreen() {
                                 name.includes('laptop') ||
                                 name.includes('desktop') ||
                                 name.includes('pc') ||
-                                name.includes('flinch'); // Added 'flinch' based on logs
+                                name.includes('flinch') || name.includes('oneshare') || name.includes('one share');
 
                             return (
 
