@@ -9,7 +9,7 @@ import { NativeEventEmitter, NativeModules } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 import GlassContainer from '../src/components/GlassContainer';
-import TransferProgressModal from '../src/components/TransferProgressModal';
+// import TransferProgressModal from '../src/components/TransferProgressModal'; // Removed
 import { BleService } from '../src/services/BleService';
 
 // Interface for history items
@@ -29,10 +29,11 @@ export default function RecentScreen() {
 
     console.log("RecentScreen Params:", { deviceName, ip, port, rawPort: params.port });
 
-    const [progressVisible, setProgressVisible] = useState(false);
-    const [transferProgress, setTransferProgress] = useState(0);
-    const [transferFileName, setTransferFileName] = useState("");
-    const [isReceiving, setIsReceiving] = useState(false);
+    // Local UI state for progress removed - relying on global _layout.tsx modal
+    // const [progressVisible, setProgressVisible] = useState(false);
+    // const [transferProgress, setTransferProgress] = useState(0);
+    // const [transferFileName, setTransferFileName] = useState("");
+    // const [isReceiving, setIsReceiving] = useState(false);
     const [pendingFiles, setPendingFiles] = useState<string[]>([]);
 
     const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -67,13 +68,9 @@ export default function RecentScreen() {
             }
         });
 
-        const progressSub = eventEmitter.addListener('OneShare:TransferProgress', (data: any) => {
-            setTransferProgress(Math.round(data.progress));
-        });
-
         return () => {
             fileSub.remove();
-            progressSub.remove();
+            // progressSub.remove();
             BleService.stopAdvertising();
         };
     }, []);
@@ -90,14 +87,11 @@ export default function RecentScreen() {
 
         console.log(`Processing queue. Target: ${ip}:${port}`);
 
-        setProgressVisible(true);
-        setIsReceiving(false);
-
         while (queueRef.current.length > 0) {
             const file = queueRef.current[0];
-            setTransferFileName(file.name);
+            // setTransferFileName(file.name); // Unused
             setPendingFiles(queueRef.current.slice(1).map(f => f.name));
-            setTransferProgress(0);
+            // setTransferProgress(0); // Unused
 
             console.log(`Sending file: ${file.name} to ${ip}:${port}`);
             const status = await TransferService.sendFile(ip, port, file.uri);
@@ -111,7 +105,6 @@ export default function RecentScreen() {
             }
         }
 
-        setProgressVisible(false);
         isProcessingQueue.current = false;
     };
 
@@ -216,17 +209,7 @@ export default function RecentScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <TransferProgressModal
-                    visible={progressVisible}
-                    progress={transferProgress}
-                    fileName={transferFileName}
-                    isReceiving={isReceiving}
-                    onCancel={() => {
-                        // Implement cancel logic if needed
-                        setProgressVisible(false);
-                    }}
-                    pendingFiles={pendingFiles}
-                />
+                {/* Local TransferProgressModal removed to rely on global _layout.tsx modal */}
             </SafeAreaView>
         </View>
     );

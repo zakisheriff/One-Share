@@ -307,7 +307,7 @@ export default function HomeScreen() {
                         contentContainerStyle={styles.gridContent}
                         renderItem={({ item }) => {
                             const name = item.name.toLowerCase();
-                            console.log(`Rendering device: "${item.name}" (lower: "${name}")`); // DEBUG LOG
+                            // console.log(`Rendering device: "${item.name}" (lower: "${name}")`); // Reduce noise
                             const isDesktop = name.includes('mac') ||
                                 name.includes('book') ||
                                 name.includes('imac') ||
@@ -316,8 +316,13 @@ export default function HomeScreen() {
                                 name.includes('pc') ||
                                 name.includes('flinch') || name.includes('oneshare') || name.includes('one share');
 
-                            return (
+                            // Fix Naming: Ensure we display the actual name if available, fallback only if truly unknown
+                            // If the name is exactly "Flinch" or "One Share Mac", and we have an IP, we might want to keep it?
+                            // Actually, just show whatever name we have. The issue is likely the Mac broadcasting "One Share"
+                            // But if it is "Unknown", we use "Unknown Device".
+                            const displayName = (item.name === "Unknown" || item.name === "Flinch") && item.ip ? "Mac Device" : (item.name === "Unknown" ? "Unknown Device" : item.name);
 
+                            return (
                                 <TouchableOpacity
                                     style={styles.gridItem}
                                     onPress={() => handleDevicePress(item)}
@@ -331,9 +336,9 @@ export default function HomeScreen() {
                                                 color="#000000"
                                             />
                                         </View>
-                                        <View style={{ alignItems: 'center', width: '100%' }}>
-                                            <Text style={[styles.deviceName, { textAlign: 'center' }]} numberOfLines={1}>
-                                                {item.name}
+                                        <View style={{ alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+                                            <Text style={[styles.deviceName, { textAlign: 'center' }]} numberOfLines={2} ellipsizeMode="tail">
+                                                {displayName}
                                             </Text>
                                         </View>
                                     </GlassContainer>

@@ -21,6 +21,7 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
@@ -402,7 +403,8 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
             var totalReceived = 0L
             var bytesRead = inputStream.read(buffer)
 
-            var lastUpdate = System.currentTimeMillis()
+            var startTime = System.currentTimeMillis() // Initialize Start Time
+            var lastUpdate = startTime // Initialize Last Update
 
             while (bytesRead != -1) {
                 outputStream.write(buffer, 0, bytesRead)
@@ -412,11 +414,26 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                 if (now - lastUpdate > 250) { // Update every 250ms (throttled)
                     val progress = if (fileSize > 0) (totalReceived * 100.0 / fileSize) else 0.0
 
+                    // Calculate ETA
+                    var eta: Double = -1.0
+                    val timeElapsed = now - startTime
+                    if (timeElapsed > 0 && totalReceived > 0) {
+                        val speed = totalReceived.toDouble() / timeElapsed // bytes per ms
+                        val remainingBytes = fileSize - totalReceived
+                        if (speed > 0) {
+                            eta = remainingBytes / speed // ms
+                        }
+                    }
+
                     val params = com.facebook.react.bridge.Arguments.createMap()
                     params.putDouble("progress", progress)
                     params.putString("received", totalReceived.toString())
                     params.putString("total", fileSize.toString())
                     params.putString("fileName", fileName)
+                    params.putString("type", "receiving") // Add type
+                    if (eta > 0) {
+                        params.putDouble("eta", eta) // Add ETA
+                    }
                     sendEvent("OneShare:TransferProgress", params)
                     lastUpdate = now
                 }
@@ -571,8 +588,13 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
 
         val pUuid = ParcelUuid(UUID.fromString(uuidString))
 
-        // Basic advertising data
-        val data = AdvertiseData.Builder().setIncludeDeviceName(true).addServiceUuid(pUuid).build()
+        // Split data to fit in legacy advertising packet (31 bytes)
+        // 1. Advertise Data: UUID + Tx Power
+        val advertiseData =
+                AdvertiseData.Builder().addServiceUuid(pUuid).setIncludeTxPowerLevel(true).build()
+
+        // 2. Scan Response: Device Name (Mac will request this)
+        val scanResponse = AdvertiseData.Builder().setIncludeDeviceName(true).build()
 
         advertiseCallback =
                 object : AdvertiseCallback() {
@@ -587,7 +609,7 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                     }
                 }
 
-        advertiser?.startAdvertising(settings, data, advertiseCallback)
+        advertiser?.startAdvertising(settings, advertiseData, scanResponse, advertiseCallback)
     }
 
     @ReactMethod
@@ -714,9 +736,10 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
     fun sendFileTCP(ip: String, port: Int, fileUri: String, promise: Promise) {
         executor.execute {
             try {
-                val socket = Socket(ip, port)
+                val socket = Socket()
                 activeSocket = socket // Track active socket
                 android.util.Log.d("OneShareNetwork", "Connecting to $ip:$port for file transfer")
+                socket.connect(InetSocketAddress(ip, port), 5000) // 5 second timeout
 
                 val outputStream = socket.getOutputStream()
                 val inputStream = socket.getInputStream()
@@ -755,6 +778,7 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                     fileSize = file.length()
                 }
 
+                socket.tcpNoDelay = true
                 android.util.Log.d(
                         "OneShareNetwork",
                         "Sending file: $fileName, Size: $fileSize, Path: $fileUri"
@@ -787,10 +811,11 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                 }
 
                 // Send Body
-                val buffer = ByteArray(1048576) // 1MB
+                val buffer = ByteArray(131072) // 128KB
                 var bytesRead = fileStream.read(buffer)
                 var totalSent = 0L
-                var lastUpdate = System.currentTimeMillis()
+                var startTime = System.currentTimeMillis()
+                var lastUpdate = System.currentTimeMillis() // Restore lastUpdate
 
                 while (bytesRead != -1) {
                     outputStream.write(buffer, 0, bytesRead)
@@ -800,11 +825,21 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                     if (now - lastUpdate > 100) {
                         val progress = if (fileSize > 0) (totalSent * 100.0 / fileSize) else 0.0
 
+                        // Calculate Speed & ETA
+                        val elapsed = now - startTime
+                        val speed =
+                                if (elapsed > 0) totalSent.toDouble() / elapsed
+                                else 0.0 // bytes per ms
+                        val remainingBytes = fileSize - totalSent
+                        val estimatedTimeMs = if (speed > 0) remainingBytes / speed else 0.0
+
                         val params = com.facebook.react.bridge.Arguments.createMap()
                         params.putDouble("progress", progress)
                         params.putString("sent", totalSent.toString())
                         params.putString("total", fileSize.toString())
-                        sendEvent("OneShare:TransferProgress", params) // Unified event name
+                        params.putString("type", "sending")
+                        params.putDouble("eta", estimatedTimeMs) // Add ETA in ms
+                        sendEvent("OneShare:TransferProgress", params)
                         lastUpdate = now
                     }
 
@@ -812,6 +847,19 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                 }
 
                 outputStream.flush()
+
+                // Force send 100% progress
+                val finalParams = com.facebook.react.bridge.Arguments.createMap()
+                finalParams.putDouble("progress", 100.0)
+                finalParams.putString("sent", totalSent.toString())
+                finalParams.putString("total", fileSize.toString())
+                finalParams.putString("type", "sending")
+                sendEvent("OneShare:TransferProgress", finalParams)
+
+                try {
+                    socket.shutdownOutput() // Send FIN to ensure receiver detects EOF
+                } catch (ignore: Exception) {}
+
                 fileStream.close()
                 socket.close()
                 activeSocket = null

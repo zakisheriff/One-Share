@@ -48,11 +48,13 @@ function RootLayoutNav() {
     progress: number;
     fileName: string;
     type: 'sending' | 'receiving';
+    eta: number | null; // Add ETA
   }>({
     visible: false,
     progress: 0,
     fileName: '',
-    type: 'receiving'
+    type: 'receiving',
+    eta: null
   });
 
   const [pairingVisible, setPairingVisible] = useState(false);
@@ -93,17 +95,26 @@ function RootLayoutNav() {
         visible: true,
         progress: 0,
         fileName: event.fileName,
-        type: 'receiving'
+        type: 'receiving',
+        eta: null
       });
     });
 
     const transferProgressSub = eventEmitter.addListener('OneShare:TransferProgress', (event: any) => {
+      // Auto-close on completion
+      if (Math.round(event.progress) >= 100) {
+        setTimeout(() => {
+          setTransferState(prev => ({ ...prev, visible: false, progress: 0, eta: null }));
+        }, 2000); // 2 second auto-close delay
+      }
+
       setTransferState(prev => ({
         ...prev,
         visible: true,
         progress: event.progress,
-        fileName: event.fileName,
-        type: 'receiving'
+        fileName: event.fileName || prev.fileName,
+        type: event.type === 'sending' ? 'sending' : 'receiving',
+        eta: event.eta // Pass ETA
       }));
     });
 
@@ -113,7 +124,7 @@ function RootLayoutNav() {
 
     const fileReceivedSub = eventEmitter.addListener('OneShare:FileReceived', (event: any) => {
       setTransferState(prev => ({ ...prev, visible: false }));
-      showAlert("File Received", `Saved to Downloads: ${event.fileName}`, "success");
+      // showAlert("File Received", `Saved to Downloads: ${event.fileName}`, "success"); // Removed as per user request
     });
 
     const fileErrorSub = eventEmitter.addListener('OneShare:FileError', (event: any) => {
@@ -164,8 +175,9 @@ function RootLayoutNav() {
         progress={transferState.progress}
         fileName={transferState.fileName}
         isReceiving={transferState.type === 'receiving'}
+        eta={transferState.eta} // Pass ETA
         onCancel={() => {
-          setTransferState(prev => ({ ...prev, visible: false }));
+          setTransferState(prev => ({ ...prev, visible: false, eta: null }));
         }}
       />
 
@@ -198,7 +210,7 @@ function PairingModalController({ visible, requestId, remotePort, onClose, onSuc
     const newCode = Math.floor(1000 + Math.random() * 9000).toString();
     setCode(newCode);
 
-    const eventEmitter = new NativeEventEmitter(NativeModules.FlinchNetwork);
+    const eventEmitter = new NativeEventEmitter(NativeModules.OneShareNetwork);
     const sub = eventEmitter.addListener('OneShare:PairingVerify', (data: any) => {
       console.log("Verifying code:", data.code, "Expected:", newCode);
       if (data.code === newCode) {

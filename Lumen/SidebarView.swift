@@ -24,7 +24,7 @@ struct SidebarView: View {
                     .tag("ios")
             }
             
-            Section("Wireless") {
+            Section("Wireless", isExpanded: .constant(true)) {
                 Label("Transfer", systemImage: "antenna.radiowaves.left.and.right")
                     .tag("wireless")
             }

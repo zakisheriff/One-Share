@@ -86,18 +86,7 @@ struct WirelessTransferView: View {
             
             Spacer()
             
-            Toggle("", isOn: Binding(
-                get: { wirelessState.isEnabled },
-                set: { newValue in
-                    if newValue {
-                        wirelessState.start()
-                    } else {
-                        wirelessState.stop()
-                    }
-                }
-            ))
-            .toggleStyle(.switch)
-            .labelsHidden()
+            // Toggle removed - Always On
         }
         .padding()
     }
@@ -116,40 +105,56 @@ struct WirelessTransferView: View {
     }
     
     private func deviceCard(for peer: Peer) -> some View {
-        VStack(spacing: 8) {
-            // Device icon
-            Image(systemName: peer.platform == "Android" ? "phone.fill" : "desktopcomputer")
-                .font(.system(size: 36))
-                .foregroundStyle(.blue)
-            
-            Text(peer.name)
-                .font(.caption)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            
+        Button(action: {
             if peer.isPaired {
-                Button("Send") {
-                    sendFilesToPeer(peer)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .disabled(selectedFilesToSend.isEmpty)
+                // Determine if we should select for sending or just show status?
+                // Actually, UX request: "click the container and it should be clicked"
+                // If paired, maybe select it? But existing logic is specific.
+                // Request implies pairing flow: "no need to click pair, user must just click the container"
+                // So if NOT paired, clicking container -> Pair.
+                wirelessState.initiatePairing(with: peer)
+                showingPairingSheet = true
             } else {
-                Button("Pair") {
-                    wirelessState.initiatePairing(with: peer)
-                    showingPairingSheet = true
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                wirelessState.initiatePairing(with: peer)
+                showingPairingSheet = true
             }
+        }) {
+            VStack(spacing: 8) {
+                // Device icon
+                Image(systemName: peer.platform == "Android" ? "phone" : "laptopcomputer") // Native symbols
+                    .font(.system(size: 40))
+                    .symbolRenderingMode(.hierarchical) // Modern look
+                    .foregroundStyle(.blue)
+                
+                Text(peer.name)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(width: 110, height: 110)
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(nsColor: .controlBackgroundColor)) // Native background
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(peer.isPaired ? Color.green.opacity(0.5) : Color.clear, lineWidth: 2)
+            )
         }
-        .frame(width: 100, height: 120)
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.background)
-                .shadow(radius: 2)
-        )
+        .buttonStyle(.plain) // Remove default button button style to make it look like a card
+        .contextMenu { // Keep explicit actions available
+             if peer.isPaired {
+                 Button("Send Files") { sendFilesToPeer(peer) }
+             } else {
+                 Button("Pair") { 
+                    wirelessState.initiatePairing(with: peer) 
+                    showingPairingSheet = true
+                 }
+             }
+        }
     }
     
     // MARK: - Empty/Disabled States
@@ -212,6 +217,20 @@ struct WirelessTransferView: View {
             Text("\(Int(wirelessState.transferProgress))%")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            
+            HStack(spacing: 12) {
+                if !wirelessState.transferSpeed.isEmpty {
+                    Label(wirelessState.transferSpeed, systemImage: "speedometer")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                
+                if !wirelessState.timeRemaining.isEmpty {
+                    Label(wirelessState.timeRemaining, systemImage: "clock")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .padding()
         .background(
@@ -283,6 +302,7 @@ struct PairingSheetView: View {
     @ObservedObject var pairingManager: PairingManager
     @ObservedObject var networkManager: NetworkManager
     @Environment(\.dismiss) var dismiss
+    @FocusState private var isFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 24) {
@@ -294,19 +314,31 @@ struct PairingSheetView: View {
                 Text(pairingManager.pairingCode)
                     .font(.system(size: 48, weight: .bold, design: .monospaced))
                     .foregroundStyle(.blue)
+                    .textSelection(.enabled) // Allow copying
                 
             } else if pairingManager.isInitiatingPairing {
                 // Enter code from other device
-                Text("Enter the code shown on the device")
+                Text("Enter code from device")
                     .font(.headline)
                 
-                TextField("Code", text: $pairingManager.inputCode)
+                TextField("0000", text: $pairingManager.inputCode)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 24, design: .monospaced))
                     .multilineTextAlignment(.center)
-                    .frame(width: 150)
+                    .frame(width: 120)
+                    .focused($isFieldFocused) // Auto-focus
+                    .onSubmit { // Enter key support
+                        if pairingManager.inputCode.count >= 4 {
+                            pairingManager.verifyRemoteCode(networkManager: networkManager) { success in
+                                if success { dismiss() }
+                            }
+                        }
+                    }
+                    .onAppear {
+                         isFieldFocused = true
+                    }
                 
-                Button("Verify") {
+                Button("Connect") {
                     pairingManager.verifyRemoteCode(networkManager: networkManager) { success in
                         if success {
                             dismiss()
@@ -315,6 +347,7 @@ struct PairingSheetView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(pairingManager.inputCode.count < 4)
+                .keyboardShortcut(.defaultAction) // Enter key support for button
             }
             
             Button("Cancel") {

@@ -9,6 +9,7 @@ interface TransferProgressModalProps {
     progress: number; // 0 to 100
     fileName: string;
     isReceiving: boolean; // true for receiving, false for sending
+    eta?: number | null; // Estimated time in ms
     onCancel: () => void;
     onOpen?: () => void;
     onAddFiles?: () => void;
@@ -17,7 +18,7 @@ interface TransferProgressModalProps {
 
 const { width } = Dimensions.get('window');
 
-export default function TransferProgressModal({ visible, progress, fileName, isReceiving, onCancel, onOpen, onAddFiles, pendingFiles }: TransferProgressModalProps) {
+export default function TransferProgressModal({ visible, progress, fileName, isReceiving, eta, onCancel, onOpen, onAddFiles, pendingFiles }: TransferProgressModalProps) {
     const handleCancel = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onCancel();
@@ -29,6 +30,16 @@ export default function TransferProgressModal({ visible, progress, fileName, isR
     };
 
     const isComplete = progress >= 100;
+
+    // Format time helper
+    const getFormattedTime = (ms: number) => {
+        if (ms < 1000) return "Calculating...";
+        const seconds = Math.ceil(ms / 1000);
+        if (seconds < 60) return `${seconds}s left`;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}m ${remainingSeconds}s left`;
+    };
 
     return (
         <Modal
@@ -73,9 +84,16 @@ export default function TransferProgressModal({ visible, progress, fileName, isR
                                 <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
                             </View>
 
-                            <Text style={styles.percentage}>
-                                {Math.round(progress)}%
-                            </Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 24 }}>
+                                <Text style={styles.percentage}>
+                                    {Math.round(progress)}%
+                                </Text>
+                                {eta != null && (
+                                    <Text style={styles.percentage}>
+                                        {getFormattedTime(eta)}
+                                    </Text>
+                                )}
+                            </View>
                         </>
                     )}
 

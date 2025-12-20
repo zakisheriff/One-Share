@@ -11,12 +11,14 @@ import Combine
 /// Manages wireless file transfer state for One Share
 class WirelessTransferState: ObservableObject {
     // MARK: - Published Properties
-    @Published var isEnabled: Bool = false
+    @Published var isEnabled: Bool = true // Always on by default
     @Published var connectedPeers: [Peer] = []
     @Published var isTransferring: Bool = false
     @Published var transferProgress: Double = 0.0
     @Published var currentTransferFileName: String = ""
     @Published var transferHistory: [TransferHistoryItem] = []
+    @Published var transferSpeed: String = ""
+    @Published var timeRemaining: String = ""
     @Published var pendingRequest: NetworkManager.TransferRequest?
     
     // MARK: - Managers
@@ -29,6 +31,7 @@ class WirelessTransferState: ObservableObject {
     
     init() {
         setupBindings()
+        start() // Auto-start
     }
     
     private func setupBindings() {
@@ -66,6 +69,14 @@ class WirelessTransferState: ObservableObject {
         networkManager.$transferHistory
             .receive(on: RunLoop.main)
             .assign(to: &$transferHistory)
+            
+        networkManager.$transferSpeed
+            .receive(on: RunLoop.main)
+            .assign(to: &$transferSpeed)
+            
+        networkManager.$timeRemaining
+            .receive(on: RunLoop.main)
+            .assign(to: &$timeRemaining)
         
         // Handle pairing requests
         networkManager.onPairingRequest = { [weak self] code in

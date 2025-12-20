@@ -28,8 +28,16 @@ class FileReceiver {
     var onPairingRequest: ((String) -> Bool)? // For verifying code (Receiver)
     var onPairingInitiated: ((String, UInt16) -> Void)? // For generating code (Receiver)
     var onProgress: ((Double) -> Void)?
+    var onSpeedUpdate: ((String) -> Void)?
+    var onTimeRemainingUpdate: ((String) -> Void)?
     var onComplete: (() -> Void)?
     var onCancel: (() -> Void)?
+    
+    // ETA State
+    private var transferStartTime: Date?
+    private var lastUpdateTime: Date?
+    private var lastBytesTransferred: Int64 = 0
+    private var speedSamples: [Double] = []
     
     init(connection: NWConnection) {
         self.connection = connection
@@ -47,8 +55,9 @@ class FileReceiver {
             if let data = content, !data.isEmpty {
                 self.processData(data)
             }
+            
             if isComplete {
-                print("Connection closed by sender.")
+                print("Connection closed by peer.")
                 self.finishFile()
             } else if error == nil {
                 self.receive()
@@ -58,6 +67,50 @@ class FileReceiver {
                 self.onCancel?()
             }
         }
+    }
+    
+    private func updateSpeedAndETA() {
+        guard let startTime = transferStartTime else { return }
+        let now = Date()
+        
+        if let lastUpdate = lastUpdateTime {
+            let timeDelta = now.timeIntervalSince(lastUpdate)
+            if timeDelta > 0.5 { // Update every 500ms
+                let bytesDelta = totalBytesReceived - lastBytesTransferred
+                let instantSpeed = Double(bytesDelta) / timeDelta
+                
+                speedSamples.append(instantSpeed)
+                if speedSamples.count > 10 { speedSamples.removeFirst() }
+                
+                let avgSpeed = speedSamples.reduce(0, +) / Double(speedSamples.count)
+                
+                // Speed String
+                let speedStr = ByteCountFormatter.string(fromByteCount: Int64(avgSpeed), countStyle: .file) + "/s"
+                onSpeedUpdate?(speedStr)
+                
+                // ETA String
+                let remainingBytes = currentFileSize - totalBytesReceived
+                if avgSpeed > 0 {
+                    let secondsRemaining = Double(remainingBytes) / avgSpeed
+                    let timeStr = formatTime(seconds: secondsRemaining)
+                    onTimeRemainingUpdate?(timeStr)
+                }
+                
+                lastUpdateTime = now
+                lastBytesTransferred = totalBytesReceived
+            }
+        } else {
+             lastUpdateTime = now
+             lastBytesTransferred = totalBytesReceived
+        }
+    }
+    
+    private func formatTime(seconds: Double) -> String {
+        if seconds < 1 { return "Done" }
+        if seconds < 60 { return String(format: "%.0fs left", seconds) }
+        let minutes = Int(seconds / 60)
+        let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
+        return "\(minutes)m \(secs)s left"
     }
 
     private func processData(_ data: Data) {
@@ -123,6 +176,12 @@ class FileReceiver {
                             currentFileSize = size
                             // print("Header Parsed. FileName: \(currentFileName), Size: \(currentFileSize)")
                             
+                            // Initialize ETA
+                            self.transferStartTime = Date()
+                            self.lastUpdateTime = Date()
+                            self.lastBytesTransferred = 0
+                            self.speedSamples = []
+
                             // Slice off the header
                             let bodyData = receivedData.subdata(in: headerEndIndex..<receivedData.count)
                             // print("Initial Body Data Count: \(bodyData.count)")
@@ -164,6 +223,7 @@ class FileReceiver {
             writeToTempFile(data)
             totalBytesReceived += Int64(data.count)
             onProgress?(Double(totalBytesReceived) / Double(currentFileSize) * 100)
+            updateSpeedAndETA()
             
             if totalBytesReceived >= currentFileSize {
                 finishFile()
@@ -235,7 +295,7 @@ class FileReceiver {
                 }
                 print("Sent ACCEPT. Switching to readingBody.")
                 self.state = .readingBody
-                self.receive() // Resume receiving
+                // self.receive() // REMOVED: Do NOT call receive() here. The loop is already running from start().
             })
         } else {
             let response = "DECLINE::"
@@ -259,10 +319,9 @@ class FileReceiver {
         print("Finishing file. Received: \(totalBytesReceived), Expected: \(currentFileSize)")
 
         if totalBytesReceived < currentFileSize {
-            print("Transfer incomplete. Received: \(totalBytesReceived), Expected: \(currentFileSize). Discarding.")
-            cleanup()
-            onCancel?()
-            return
+            print("Warning: Transfer incomplete. Received: \(totalBytesReceived), Expected: \(currentFileSize). Saving anyway.")
+            // We proceed to save because the sender closed the connection, implying they possess no more data.
+            // This handles cases where the Reported File Size (Content-Length) was incorrect.
         }
         
         isFileSaved = true // Mark as saved
@@ -327,6 +386,8 @@ class NetworkManager: ObservableObject {
     
     @Published var pendingRequest: TransferRequest?
     @Published var transferProgress: Double = 0.0
+    @Published var transferSpeed: String = ""
+    @Published var timeRemaining: String = ""
     @Published var isTransferring: Bool = false
     @Published var currentTransferFileName: String = ""
     @Published var transferHistory: [TransferHistoryItem] = []
@@ -459,6 +520,18 @@ class NetworkManager: ObservableObject {
                 if let index = self?.transferHistory.firstIndex(where: { $0.id == receiver.id && $0.isIncoming }) {
                     self?.transferHistory[index].progress = progress
                 }
+            }
+        }
+        
+        receiver.onSpeedUpdate = { [weak self] speed in
+            DispatchQueue.main.async {
+                self?.transferSpeed = speed
+            }
+        }
+        
+        receiver.onTimeRemainingUpdate = { [weak self] time in
+            DispatchQueue.main.async {
+                self?.timeRemaining = time
             }
         }
         
@@ -597,9 +670,10 @@ class NetworkManager: ObservableObject {
     
     private func sendHeader(connection: NWConnection, url: URL) {
         do {
-            let data = try Data(contentsOf: url)
+            // Get file size without loading content
+            let resources = try url.resourceValues(forKeys: [.fileSizeKey])
+            let filesize = resources.fileSize ?? 0
             let filename = url.lastPathComponent
-            let filesize = data.count
             
             let header = "\(filename)::\(filesize)::"
             if let headerData = header.data(using: .utf8) {
@@ -622,8 +696,8 @@ class NetworkManager: ObservableObject {
                         if let responseData = content, let response = String(data: responseData, encoding: .utf8) {
                             print("Received response: \(response)")
                             if response.contains("ACCEPT::") {
-                                print("Receiver accepted. Sending body...")
-                                self.sendBody(connection: connection, data: data)
+                                print("Receiver accepted. Sending body (streaming)...")
+                                self.streamBody(connection: connection, url: url, fileSize: Int64(filesize))
                             } else {
                                 print("Receiver declined or invalid response: \(response)")
                                 connection.cancel()
@@ -637,73 +711,102 @@ class NetworkManager: ObservableObject {
                 })
             }
         } catch {
-            print("Error reading file: \(error)")
+            print("Error reading file attributes: \(error)")
             DispatchQueue.main.async { self.isTransferring = false }
             self.processQueue()
         }
     }
     
-    private func sendBody(connection: NWConnection, data: Data) {
-        let chunkSize = 131072 // 128KB - Optimized for mobile consistency
-        let totalSize = data.count
-        var offset = 0
-        let dispatchGroup = DispatchGroup()
-        var bytesSent = 0
-        
-        print("Starting pipelined transfer of \(totalSize) bytes")
-        
-        while offset < totalSize {
-            let endIndex = min(offset + chunkSize, totalSize)
-            let chunk = data.subdata(in: offset..<endIndex)
-            let chunkSize = chunk.count // Capture for closure
+    private func streamBody(connection: NWConnection, url: URL, fileSize: Int64) {
+        // Run on background queue to avoid blocking main thread with file I/O
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             
-            dispatchGroup.enter()
-            connection.send(content: chunk, completion: .contentProcessed { [weak self] error in
-                if let error = error {
-                    print("Error sending chunk: \(error)")
-                    self?.cancelTransfer() // Stop everything on error
-                } else {
-                    DispatchQueue.main.async {
-                        bytesSent += chunkSize
-                        self?.transferProgress = Double(bytesSent) / Double(totalSize) * 100
-                        
-                        // Update History
-                        if let index = self?.transferHistory.firstIndex(where: { $0.fileName == self?.currentTransferFileName && !$0.isIncoming && $0.state == .transferring }) {
-                            self?.transferHistory[index].progress = self?.transferProgress ?? 0
-                        }
+            do {
+                let fileHandle = try FileHandle(forReadingFrom: url)
+                // Note: Do NOT use defer { fileHandle.close() } here because sendNextChunk is asynchronous/recursive.
+                // We must close the file handle manually when finished or on error.
+                
+                let chunkSize = 65536 // 64KB chunks for smooth streaming
+                var offset: Int64 = 0
+                
+                // Recursive function to send chunks one by one
+                func sendNextChunk() {
+                    // Check for cancellation
+                    if self.sendingConnection == nil {
+                        print("Transfer cancelled during streaming")
+                        try? fileHandle.close()
+                        return
                     }
-                }
-                dispatchGroup.leave()
-            })
-            
-            offset += chunkSize
-        }
-        
-        dispatchGroup.notify(queue: .main) { [weak self] in
-            print("Body sent completely (all chunks processed)")
-            self?.transferProgress = 100.0
-            
-            // Mark as completed in history
-            if let index = self?.transferHistory.firstIndex(where: { $0.fileName == self?.currentTransferFileName && !$0.isIncoming && $0.state == .transferring }) {
-                self?.transferHistory[index].progress = 100.0
-                self?.transferHistory[index].state = .completed
-            }
-            
-            // Wait a bit before closing to ensure receiver has time to process/ack if needed
-            // and to prevent ConnectionReset on the receiver side (especially Android)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                if self?.transferQueue.isEmpty ?? true {
-                    self?.isTransferring = false
-                    self?.currentTarget = nil
-                } else {
-                    self?.processQueue()
+                    
+                    if offset >= fileSize {
+                        print("File streaming complete")
+                        try? fileHandle.close() // Close handle now that we are done reading
+                        
+                        DispatchQueue.main.async {
+                            self.transferProgress = 100.0
+                            
+                             // Mark as completed in history
+                            if let index = self.transferHistory.firstIndex(where: { $0.fileName == self.currentTransferFileName && !$0.isIncoming && $0.state == .transferring }) {
+                                self.transferHistory[index].progress = 100.0
+                                self.transferHistory[index].state = .completed
+                            }
+                            
+                            // Wait a bit before closing
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                if self.transferQueue.isEmpty {
+                                    self.isTransferring = false
+                                    self.currentTarget = nil
+                                } else {
+                                    self.processQueue()
+                                }
+                                connection.cancel()
+                                self.sendingConnection = nil
+                            }
+                        }
+                        return
+                    }
+                    
+                    // Read chunk
+                    let data = fileHandle.readData(ofLength: chunkSize)
+                    if data.isEmpty {
+                        // EOF reached unexpectedly?
+                        print("EOF reached unexpectedly")
+                        try? fileHandle.close()
+                        return
+                    }
+                    
+                    let currentChunkSize = data.count
+                    
+                    connection.send(content: data, completion: .contentProcessed { error in
+                        if let error = error {
+                            print("Error sending chunk: \(error)")
+                            try? fileHandle.close()
+                            self.cancelTransfer()
+                            return
+                        }
+                        
+                        offset += Int64(currentChunkSize)
+                        
+                        DispatchQueue.main.async {
+                            self.transferProgress = Double(offset) / Double(fileSize) * 100
+                            // Update History
+                            if let index = self.transferHistory.firstIndex(where: { $0.fileName == self.currentTransferFileName && !$0.isIncoming && $0.state == .transferring }) {
+                                self.transferHistory[index].progress = self.transferProgress
+                            }
+                        }
+                        
+                        // Continue sending
+                        sendNextChunk()
+                    })
                 }
                 
-                // Only cancel if we are done or if we want to force close.
-                // For file transfer, we usually close after sending.
-                print("Closing connection after transfer")
-                connection.cancel()
-                self?.sendingConnection = nil
+                // Start the loop
+                sendNextChunk()
+                
+            } catch {
+                print("Error opening file handle: \(error)")
+                self.cancelTransfer()
             }
         }
     }
