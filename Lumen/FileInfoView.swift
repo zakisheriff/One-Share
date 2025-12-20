@@ -1,10 +1,30 @@
+//
+//  FileInfoView.swift
+//  One Share
+//
+//  Created by Zaki Sheriff on 2025-11-25.
+//
+
 import SwiftUI
 
 struct FileInfoView: View {
     let item: FileSystemItem
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            // Header with close button
+            HStack {
+                Spacer()
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.secondary.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .help("Close")
+            }
+            
             HStack(spacing: 16) {
                 IconHelper.nativeIcon(for: item)
                     .resizable()

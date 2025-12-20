@@ -1,6 +1,6 @@
 //
 //  AISearchView.swift
-//  Lumen
+//  One Share
 //
 //  Created by Zaki Sheriff on 2025-11-25.
 //
@@ -72,7 +72,7 @@ struct AISearchView: View {
                     )
                     .symbolEffect(.pulse)
                 
-                Text("Lumen AI")
+                Text("One Share AI")
                     .font(.system(.title3, design: .rounded))
                     .fontWeight(.semibold)
                 
@@ -92,7 +92,7 @@ struct AISearchView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
                     
-                    TextField("Ask Lumen... (e.g., 'Photos from last week')", text: $query)
+                    TextField("Ask One Share... (e.g., 'Photos from last week')", text: $query)
                         .textFieldStyle(.plain)
                         .font(.system(.body, design: .rounded))
                         .onSubmit {
@@ -192,7 +192,7 @@ struct AISearchView: View {
                         .font(.system(.title2, design: .rounded))
                         .fontWeight(.medium)
                     
-                    Text("Lumen scans your files locally and uses Gemini to find exactly what you need.")
+                    Text("One Share scans your files locally and uses Gemini to find exactly what you need.")
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -341,7 +341,7 @@ struct AISearchView: View {
                     }
                     
                     if scanner.indexedFiles.isEmpty {
-                        throw NSError(domain: "Lumen", code: 404, userInfo: [NSLocalizedDescriptionKey: "No files found to search. Please ensure you have files in Documents, Downloads, or Pictures."])
+                        throw NSError(domain: "OneShare", code: 404, userInfo: [NSLocalizedDescriptionKey: "No files found to search. Please ensure you have files in Documents, Downloads, or Pictures."])
                     }
                 }
                 
@@ -355,7 +355,7 @@ struct AISearchView: View {
                 }
                 
                 if scopedFiles.isEmpty {
-                     throw NSError(domain: "Lumen", code: 404, userInfo: [NSLocalizedDescriptionKey: "No files found in selected scope (\(searchScope.rawValue))."])
+                     throw NSError(domain: "OneShare", code: 404, userInfo: [NSLocalizedDescriptionKey: "No files found in selected scope (\(searchScope.rawValue))."])
                 }
                 
                 results = try await geminiService.search(query: query, files: scopedFiles)

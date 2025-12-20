@@ -1,4 +1,4 @@
-# <div align="center">Lumen</div>
+# <div align="center">One Share</div>
 
 <div align="center">
 <strong>The Next-Generation Dual-Protocol File Transfer for macOS</strong>
@@ -14,7 +14,7 @@
 
 <br />
 
-<a href="https://github.com/zakisheriff/Lumen/releases/latest">
+<a href="https://github.com/zakisheriff/OneShare/releases/latest">
 <img src="assets/badges/download-dmg.svg" height="50" />
 </a>
 
@@ -24,14 +24,14 @@
 
 > **"It feels like it was built by Apple."**
 >
-> Lumen isn't just a tool; it's a seamless extension of your Mac.  
+> One Share isn't just a tool; it's a seamless extension of your Mac.  
 > Designed with the fluid, glassy aesthetics of **macOS 26**, it bridges the gap between your Android & iOS devices and your Mac with elegance and speed.
 
 ---
 
 ## 🌟 Vision
 
-Lumen's purpose is to be:
+One Share's purpose is to be:
 
 - **A next-generation macOS file explorer** for Android & iOS
 - **A beautifully native SwiftUI application** showcasing true Apple-level design
@@ -39,10 +39,10 @@ Lumen's purpose is to be:
 
 ---
 
-## ✨ Why Lumen?
+## ✨ Why One Share?
 
 Forget the clunky, outdated file transfer tools of the past.  
-Lumen is built from the ground up to be **fast, beautiful, and truly native**.
+One Share is built from the ground up to be **fast, beautiful, and truly native**.
 
 ---
 
@@ -65,7 +65,7 @@ Lumen is built from the ground up to be **fast, beautiful, and truly native**.
 ## 🚀 Blazing Fast Performance
 
 - **Native C++ MTP Bridge**  
-  No wrappers — Lumen communicates directly with libmtp.
+  No wrappers — One Share communicates directly with libmtp.
 
 - **Native C++ AFC/HouseArrest Bridge**  
   Direct communication with iOS devices using libimobiledevice.
@@ -84,7 +84,7 @@ Lumen is built from the ground up to be **fast, beautiful, and truly native**.
   Plug in your device — it appears instantly.
 
 - **Smart Permission Handling**  
-  If your phone is locked, Lumen waits and refreshes automatically once unlocked.
+  If your phone is locked, One Share waits and refreshes automatically once unlocked.
 
 - **Force Reconnect Button**  
   Fixes stubborn permission issues instantly.
@@ -94,7 +94,7 @@ Lumen is built from the ground up to be **fast, beautiful, and truly native**.
 ## 📁 Project Structure
 
 ```
-Lumen/
+OneShare/
 ├── Lumen/ # Main SwiftUI macOS app
 │ ├── App/ # App entry & lifecycle
 │ ├── Views/ # All UI components & screens
@@ -122,14 +122,14 @@ Lumen/
 
 ## 📥 Download & Install
 
-You don't need to be a developer to use Lumen. Just:
+You don't need to be a developer to use One Share. Just:
 
 1. **Download the latest `.dmg`**  
-   https://github.com/zakisheriff/Lumen/releases/latest
+   https://github.com/zakisheriff/OneShare/releases/latest
 
 2. Open the `.dmg`.
 
-3. Drag **Lumen** into **Applications**.
+3. Drag **One Share** into **Applications**.
 
 4. Launch the app and plug in your Android or iOS device.
 
@@ -139,7 +139,7 @@ You don't need to be a developer to use Lumen. Just:
 
 ### 1. Clone the repository
 
-git clone https://github.com/zakisheriff/Lumen.git
+git clone https://github.com/zakisheriff/OneShare.git
 
 ### 2. Install Dependencies
 
@@ -155,7 +155,7 @@ Open in Xcode → **Run (⌘ + R)**.
 
 ## ☕️ Support the Project
 
-If Lumen helped you, inspired you, or saved you from outdated file transfer tools:
+If One Share helped you, inspired you, or saved you from outdated file transfer tools:
 
 - Consider buying me a coffee
 - It keeps development alive and motivates future updates

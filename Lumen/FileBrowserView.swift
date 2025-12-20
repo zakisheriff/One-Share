@@ -1,6 +1,6 @@
 //
 //  FileBrowserView.swift
-//  Lumen
+//  One Share
 //
 //  Created by Zaki Sheriff on 2025-11-25.
 //
@@ -19,7 +19,10 @@ struct FileBrowserView: View {
     @State private var selection = Set<UUID>()
     @State private var lastSelectedId: UUID?
     @State private var errorMessage: String?
-
+    
+    // MARK: - Performance Optimization States
+    @State private var isLoading: Bool = false
+    @State private var cachedFilteredItems: [FileSystemItem] = []
     
     // Finder Features State
     @State private var searchText = ""
@@ -150,74 +153,83 @@ struct FileBrowserView: View {
         return path
     }
     
+    // MARK: - Performance Optimized Filtering/Sorting
+    // Using cached version to avoid recomputing on every render
     var filteredAndSortedItems: [FileSystemItem] {
-        var result = items
-        
-        // Filter
-        if !searchText.isEmpty {
-            result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
-        
-        // Sort
-        result.sort { lhs, rhs in
-            switch sortOption {
-            case .name:
-                let comparison = lhs.name.localizedStandardCompare(rhs.name)
-                return sortOrder == .ascending ? comparison == .orderedAscending : comparison == .orderedDescending
-            case .kind:
-                if sortOrder == .ascending {
-                    return lhs.type.rawValue < rhs.type.rawValue
-                } else {
-                    return lhs.type.rawValue > rhs.type.rawValue
-                }
-            case .dateModified:
-                if sortOrder == .ascending {
-                    return lhs.modificationDate < rhs.modificationDate
-                } else {
-                    return lhs.modificationDate > rhs.modificationDate
-                }
-            case .dateCreated:
-                if sortOrder == .ascending {
-                    return lhs.creationDate < rhs.creationDate
-                } else {
-                    return lhs.creationDate > rhs.creationDate
-                }
-            case .size:
-                if sortOrder == .ascending {
-                    return lhs.size < rhs.size
-                } else {
-                    return lhs.size > rhs.size
-                }
-            }
-        }
-        
-        return result
+        return cachedFilteredItems
     }
     
-    private func loadItems() {
+    // Update the cached filtered items - call when items, search, or sort changes
+    private func updateFilteredItems() {
+        // Use regular Task to stay on MainActor - sorting is fast even for large lists
+        Task { @MainActor in
+            var result = items
+            
+            // Filter
+            if !searchText.isEmpty {
+                result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+            }
+            
+            // Sort - folders first, then by selected option
+            result.sort { lhs, rhs in
+                // Folders always first
+                if lhs.isDirectory != rhs.isDirectory {
+                    return lhs.isDirectory
+                }
+                
+                switch sortOption {
+                case .name:
+                    let comparison = lhs.name.localizedStandardCompare(rhs.name)
+                    return sortOrder == .ascending ? comparison == .orderedAscending : comparison == .orderedDescending
+                case .kind:
+                    return sortOrder == .ascending ? lhs.type.rawValue < rhs.type.rawValue : lhs.type.rawValue > rhs.type.rawValue
+                case .dateModified:
+                    return sortOrder == .ascending ? lhs.modificationDate < rhs.modificationDate : lhs.modificationDate > rhs.modificationDate
+                case .dateCreated:
+                    return sortOrder == .ascending ? lhs.creationDate < rhs.creationDate : lhs.creationDate > rhs.creationDate
+                case .size:
+                    return sortOrder == .ascending ? lhs.size < rhs.size : lhs.size > rhs.size
+                }
+            }
+            
+            cachedFilteredItems = result
+        }
+    }
+    
+    private func loadItems(forceRefresh: Bool = false) {
         // Set home path if not already set
         if homePath.isEmpty {
             homePath = currentPath
         }
         
         errorMessage = nil
+        isLoading = true
         
         Task {
             do {
-                // For MTP services, try to force a fresh connection
-                if let mtpService = fileService as? MTPService {
-                    // Clear cache to force fresh connection
-                    mtpService.clearCache()
+                // Only clear cache on force refresh (manual refresh button)
+                // Normal navigation should use cached results when available
+                if forceRefresh {
+                    if let mtpService = fileService as? MTPService {
+                        mtpService.clearCache()
+                    }
+                    if let iosService = fileService as? iOSDeviceService {
+                        iosService.clearCache()
+                    }
                 }
                 
                 let newItems = try await fileService.listItems(at: currentPath)
                 await MainActor.run {
                     self.items = newItems
+                    self.isLoading = false
+                    self.updateFilteredItems()
                 }
             } catch {
                 await MainActor.run {
                     self.errorMessage = "Error loading files: \(error.localizedDescription)"
                     self.items = []
+                    self.cachedFilteredItems = []
+                    self.isLoading = false
                 }
             }
         }
@@ -363,7 +375,6 @@ struct FileBrowserView: View {
     // Show file info sheet
     private func showFileInfo(for item: FileSystemItem) {
         selectedFileInfoItem = item
-        showingFileInfo = true
     }
     
     // Duplicate a file
@@ -479,7 +490,6 @@ struct FileBrowserView: View {
     }
     
     // State for file info sheet
-    @State private var showingFileInfo = false
     @State private var selectedFileInfoItem: FileSystemItem?
     
     // State for delete confirmation
@@ -550,7 +560,7 @@ struct FileBrowserView: View {
                 Divider()
                     .frame(height: 16)
                 
-                Button(action: loadItems) {
+                Button(action: { loadItems(forceRefresh: true) }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 14, weight: .semibold))
                         .frame(width: 32, height: 28)
@@ -745,7 +755,7 @@ struct FileBrowserView: View {
                     Text("Step 1: Mac Preparation (Crucial)")
                         .font(.headline)
                         .foregroundColor(.primary)
-                    Text("• COMPLETELY QUIT these apps if they are running:\n  - Android File Transfer\n  - OpenMTP\n  - Preview\n  - Photos\n• These apps aggressively grab the USB connection and prevent Lumen from connecting.")
+                    Text("• COMPLETELY QUIT these apps if they are running:\n  - Android File Transfer\n  - OpenMTP\n  - Preview\n  - Photos\n• These apps aggressively grab the USB connection and prevent One Share from connecting.")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1052,12 +1062,33 @@ struct FileBrowserView: View {
         .padding()
     }
     
+    // Check if this is a remote file (MTP or iOS)
+    private var isRemoteFileService: Bool {
+        return currentPath.hasPrefix("mtp://") || 
+               currentPath.hasPrefix("ios://") ||
+               fileService is iOSDeviceService
+    }
+    
     private func fileGridItem(_ item: FileSystemItem) -> some View {
-        VStack {
-            IconHelper.nativeIcon(for: item)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: iconSize, height: iconSize)
+        let isSelected = selection.contains(item.id)
+        
+        return VStack(spacing: 8) {
+            // Icon with drawing group for performance
+            Group {
+                if isRemoteFileService {
+                    IconHelper.sfSymbolIcon(for: item)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize, height: iconSize)
+                        .foregroundStyle(IconHelper.iconColor(for: item))
+                } else {
+                    IconHelper.nativeIcon(for: item)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize, height: iconSize)
+                }
+            }
+            .drawingGroup() // Flatten icon rendering for performance
             
             Text(item.name)
                 .font(.system(.caption, design: .rounded))
@@ -1067,23 +1098,10 @@ struct FileBrowserView: View {
         }
         .padding(12)
         .background(
-            ZStack {
-                if selection.contains(item.id) {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.selection)
-                } else {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.regularMaterial)
-                        .opacity(0.0) // Invisible by default, shows on hover if we add hover state logic
-                }
-            }
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.white.opacity(0.1), lineWidth: 1)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
+        .contentShape(RoundedRectangle(cornerRadius: 12))
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
         }
@@ -1108,35 +1126,48 @@ struct FileBrowserView: View {
     }
     
     private func fileListItem(_ item: FileSystemItem) -> some View {
-        HStack {
-            IconHelper.nativeIcon(for: item)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 28, height: 28)
-            
-            VStack(alignment: .leading) {
-                Text(item.name)
-                    .font(.system(.body, design: .rounded))
-                    .lineLimit(1)
-                    .foregroundColor(.primary)
+        let isSelected = selection.contains(item.id)
+        
+        return HStack(spacing: 12) {
+            // Icon with drawing group for performance
+            Group {
+                if isRemoteFileService {
+                    IconHelper.sfSymbolIcon(for: item)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
+                        .foregroundStyle(IconHelper.iconColor(for: item))
+                } else {
+                    IconHelper.nativeIcon(for: item)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
+                }
             }
+            .drawingGroup()
+            
+            Text(item.name)
+                .font(.system(.body, design: .rounded))
+                .lineLimit(1)
+                .foregroundColor(.primary)
             
             Spacer()
             
             Text(item.formattedSize)
-                .font(.system(.subheadline, design: .rounded))
+                .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
-                .frame(width: 70, alignment: .trailing)
+                .frame(width: 60, alignment: .trailing)
             
             Text(item.formattedDate)
-                .font(.system(.subheadline, design: .rounded))
+                .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
-                .frame(width: 120, alignment: .trailing)
+                .frame(width: 100, alignment: .trailing)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(selection.contains(item.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+                .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
         )
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
@@ -1151,43 +1182,30 @@ struct FileBrowserView: View {
         .onDrag {
             createItemProvider(for: item)
         }
-        .padding(.horizontal, 12)
-        .background(
-            ZStack {
-                if selection.contains(item.id) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.selection)
-                } else {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.regularMaterial)
-                        .opacity(0.0)
-                }
-            }
-        )
-        .contentShape(Rectangle())
-
-        .onTapGesture(count: 2) {
-            handleDoubleClick(on: item)
-        }
-        .simultaneousGesture(TapGesture().onEnded {
-            selection = [item.id]
-        })
-        .contextMenu {
-            fileContextMenu(for: item)
-        }
-        .onDrag {
-            createItemProvider(for: item)
-        }
     }
     
     @ViewBuilder
     private func fileContextMenu(for item: FileSystemItem) -> some View {
         Button("Copy") {
-            clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: false)
+            // If this item is in the selection, copy all selected items
+            // Otherwise, just copy this item
+            if selection.contains(item.id) && selection.count > 1 {
+                let selectedItems = filteredAndSortedItems.filter { selection.contains($0.id) }
+                clipboard = ClipboardItem(items: selectedItems, sourceService: fileService, isCut: false)
+            } else {
+                clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: false)
+            }
         }
         
         Button("Move") {
-            clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: true)
+            // If this item is in the selection, move all selected items
+            // Otherwise, just move this item
+            if selection.contains(item.id) && selection.count > 1 {
+                let selectedItems = filteredAndSortedItems.filter { selection.contains($0.id) }
+                clipboard = ClipboardItem(items: selectedItems, sourceService: fileService, isCut: true)
+            } else {
+                clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: true)
+            }
         }
         
         Button("Get Info") {
@@ -1207,8 +1225,14 @@ struct FileBrowserView: View {
     
     private func createItemProvider(for item: FileSystemItem) -> NSItemProvider {
         // Set clipboard for internal copy/paste
+        // If this item is in the selection, include all selected items in clipboard
         DispatchQueue.main.async {
-            self.clipboard = ClipboardItem(items: [item], sourceService: self.fileService, isCut: false)
+            if self.selection.contains(item.id) && self.selection.count > 1 {
+                let selectedItems = self.filteredAndSortedItems.filter { self.selection.contains($0.id) }
+                self.clipboard = ClipboardItem(items: selectedItems, sourceService: self.fileService, isCut: false)
+            } else {
+                self.clipboard = ClipboardItem(items: [item], sourceService: self.fileService, isCut: false)
+            }
         }
         
         // Check if this is a remote file (MTP or iOS)
@@ -1365,10 +1389,8 @@ struct FileBrowserView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingFileInfo) {
-                if let item = selectedFileInfoItem {
-                    FileInfoView(item: item)
-                }
+            .sheet(item: $selectedFileInfoItem) { item in
+                FileInfoView(item: item)
             }
             .alert("Delete File", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
@@ -1381,6 +1403,34 @@ struct FileBrowserView: View {
                 if let item = itemToDelete {
                     Text("Are you sure you want to delete \(item.name)? This action cannot be undone.")
                 }
+            }
+            // Loading overlay for smooth UX
+            .overlay {
+                if isLoading {
+                    ZStack {
+                        Color.black.opacity(0.1)
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                            Text("Loading...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(24)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                }
+            }
+            // Update filtered items when search or sort changes
+            .onChange(of: searchText) { _, _ in
+                updateFilteredItems()
+            }
+            .onChange(of: sortOption) { _, _ in
+                updateFilteredItems()
+            }
+            .onChange(of: sortOrder) { _, _ in
+                updateFilteredItems()
             }
             .background(keyboardShortcuts)
             

@@ -1,6 +1,6 @@
 //
 //  DeviceManager.swift
-//  Lumen
+//  One Share
 //
 //  Created by [Your Name] on 2025-11-27.
 //

@@ -1,6 +1,6 @@
 //
-//  LumenApp.swift
-//  Lumen
+//  OneShareApp.swift
+//  One Share
 //
 //  Created by Zaki Sheriff on 2025-11-25.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct LumenApp: App {
+struct OneShareApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var transferManager = TransferManager()
     

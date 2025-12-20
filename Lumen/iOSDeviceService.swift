@@ -1,6 +1,6 @@
 //
 //  iOSDeviceService.swift
-//  Lumen
+//  One Share
 //
 //  Created by [Your Name] on 2025-11-27.
 //
@@ -11,7 +11,7 @@ import Combine
 class iOSDeviceService: FileService, ObservableObject, @unchecked Sendable {
     
     // Serial queue for thread safety with libimobiledevice which is not thread-safe
-    private let queue = DispatchQueue(label: "com.lumen.ios.queue", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.oneshare.ios.queue", qos: .userInitiated)
     
     // Cache for folder listings
     private struct CacheEntry {
@@ -19,7 +19,7 @@ class iOSDeviceService: FileService, ObservableObject, @unchecked Sendable {
         let timestamp: Date
     }
     private var listingCache: [String: CacheEntry] = [:]
-    private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
+    private let cacheTimeout: TimeInterval = 300 // Cache for 5 minutes
     
     // Device monitoring
     @Published var connectionState: ConnectionState = .disconnected
@@ -246,7 +246,7 @@ class iOSDeviceService: FileService, ObservableObject, @unchecked Sendable {
                         Please try:
                         1. Disconnect and reconnect the USB cable
                         2. Try a different USB port
-                        3. Restart Lumen
+                        3. Restart One Share
                         4. Restart your iOS device
                         
                         Make sure you've trusted this computer on your device.

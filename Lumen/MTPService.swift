@@ -1,6 +1,6 @@
 //
 //  MTPService.swift
-//  Lumen
+//  One Share
 //
 //  Created by Zaki Sheriff on 2025-11-25.
 //
@@ -11,15 +11,15 @@ import Combine
 class MTPService: FileService, ObservableObject, @unchecked Sendable {
     
     // Serial queue for thread safety with libmtp which is not thread-safe
-    private let queue = DispatchQueue(label: "com.lumen.mtp.queue", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.oneshare.mtp.queue", qos: .userInitiated)
     
-    // Cache for folder listings
+    // Cache for folder listings - 5 minute cache for performance
     private struct CacheEntry {
         let items: [FileSystemItem]
         let timestamp: Date
     }
     private var listingCache: [String: CacheEntry] = [:]
-    private let cacheTimeout: TimeInterval = 30 // Cache for 30 seconds
+    private let cacheTimeout: TimeInterval = 300 // Cache for 5 minutes
     
     // Device monitoring
     @Published var connectionState: ConnectionState = .disconnected
