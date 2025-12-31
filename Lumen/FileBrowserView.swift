@@ -1334,10 +1334,56 @@ struct FileBrowserView: View {
                 return provider
             }
             
-            // For remote files (MTP/iOS), use simple string provider
-            // Internal transfers use clipboard-based system which is fast
+            // For remote files (MTP/iOS), create provider with both representations:
+            // 1. String for fast internal app transfers (uses clipboard)
+            // 2. File representation for Finder drops (downloads on demand)
             let provider = NSItemProvider(object: item.name as NSString)
-            print("🔍 DRAG: Created string provider for remote file: \(item.name)")
+            
+            // Add file representation for Finder/Desktop drops
+            let utType = FilePromiseHelper.utType(for: item)
+            let itemPath = item.path
+            let itemName = item.name
+            let itemSize = item.size
+            let service = fileService
+            
+            provider.registerFileRepresentation(
+                forTypeIdentifier: utType.identifier,
+                fileOptions: .openInPlace,
+                visibility: .all
+            ) { completion in
+                print("🔍 DRAG: File representation requested for \(itemName) - downloading...")
+                
+                Task {
+                    do {
+                        // Create a temporary file
+                        let tempDir = FileManager.default.temporaryDirectory
+                        let tempURL = tempDir.appendingPathComponent(itemName)
+                        
+                        // Remove existing temp file if exists
+                        try? FileManager.default.removeItem(at: tempURL)
+                        
+                        // Download the file
+                        if let mtpService = service as? MTPService {
+                            try await mtpService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { progress, _ in
+                                print("🔍 DRAG Download: \(Int(progress * 100))%")
+                            }
+                        } else if let iosService = service as? iOSDeviceService {
+                            try await iosService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { progress, _ in
+                                print("🔍 DRAG Download: \(Int(progress * 100))%")
+                            }
+                        }
+                        
+                        print("🔍 DRAG: File downloaded to \(tempURL.path)")
+                        completion(tempURL, true, nil) // true = copy the file, don't move
+                    } catch {
+                        print("🔍 DRAG: Error downloading file: \(error)")
+                        completion(nil, false, error)
+                    }
+                }
+                return nil
+            }
+            
+            print("🔍 DRAG: Created provider with string + file representation for: \(item.name)")
             return provider
         }
         .onTapGesture(count: 2) {
@@ -1430,10 +1476,56 @@ struct FileBrowserView: View {
                 return provider
             }
             
-            // For remote files (MTP/iOS), use simple string provider
-            // Internal transfers use clipboard-based system which is fast
+            // For remote files (MTP/iOS), create provider with both representations:
+            // 1. String for fast internal app transfers (uses clipboard)
+            // 2. File representation for Finder drops (downloads on demand)
             let provider = NSItemProvider(object: item.name as NSString)
-            print("🔍 DRAG: Created string provider for remote file: \(item.name)")
+            
+            // Add file representation for Finder/Desktop drops
+            let utType = FilePromiseHelper.utType(for: item)
+            let itemPath = item.path
+            let itemName = item.name
+            let itemSize = item.size
+            let service = fileService
+            
+            provider.registerFileRepresentation(
+                forTypeIdentifier: utType.identifier,
+                fileOptions: .openInPlace,
+                visibility: .all
+            ) { completion in
+                print("🔍 DRAG: File representation requested for \(itemName) - downloading...")
+                
+                Task {
+                    do {
+                        // Create a temporary file
+                        let tempDir = FileManager.default.temporaryDirectory
+                        let tempURL = tempDir.appendingPathComponent(itemName)
+                        
+                        // Remove existing temp file if exists
+                        try? FileManager.default.removeItem(at: tempURL)
+                        
+                        // Download the file
+                        if let mtpService = service as? MTPService {
+                            try await mtpService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { progress, _ in
+                                print("🔍 DRAG Download: \(Int(progress * 100))%")
+                            }
+                        } else if let iosService = service as? iOSDeviceService {
+                            try await iosService.downloadFile(at: itemPath, to: tempURL, size: itemSize) { progress, _ in
+                                print("🔍 DRAG Download: \(Int(progress * 100))%")
+                            }
+                        }
+                        
+                        print("🔍 DRAG: File downloaded to \(tempURL.path)")
+                        completion(tempURL, true, nil) // true = copy the file, don't move
+                    } catch {
+                        print("🔍 DRAG: Error downloading file: \(error)")
+                        completion(nil, false, error)
+                    }
+                }
+                return nil
+            }
+            
+            print("🔍 DRAG: Created provider with string + file representation for: \(item.name)")
             return provider
         }
         .onTapGesture(count: 2) {
