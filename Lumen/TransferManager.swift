@@ -17,6 +17,8 @@ class TransferManager: ObservableObject {
     @Published var filename: String = ""
     @Published var transferSpeed: String = ""
     @Published var timeRemaining: String = ""
+    @Published var totalSize: Int64 = 0
+    @Published var bytesTransferred: Int64 = 0
     
     private var currentTask: Task<Void, any Error>?
     private var transferStartTime: Date?
@@ -139,6 +141,8 @@ class TransferManager: ObservableObject {
     func updateProgress(progress: Double, status: String, totalSize: Int64) {
         self.progress = progress
         self.status = status
+        self.totalSize = totalSize
+        self.bytesTransferred = Int64(Double(totalSize) * progress)
         
         // Calculate speed and time remaining
         let now = Date()

@@ -18,6 +18,8 @@ struct TransferProgressWindow: View {
             status: transferManager.status,
             transferSpeed: transferManager.transferSpeed,
             timeRemaining: transferManager.timeRemaining,
+            totalSize: transferManager.totalSize,
+            bytesTransferred: transferManager.bytesTransferred,
             onCancel: {
                 transferManager.cancel()
                 dismiss()

@@ -13,7 +13,26 @@ struct TransferProgressView: View {
     let status: String
     let transferSpeed: String
     let timeRemaining: String
+    let totalSize: Int64
+    let bytesTransferred: Int64
     let onCancel: () -> Void
+    
+    // Format bytes to human readable string
+    private func formatBytes(_ bytes: Int64) -> String {
+        let kb = Double(bytes) / 1024
+        let mb = kb / 1024
+        let gb = mb / 1024
+        
+        if gb >= 1.0 {
+            return String(format: "%.2f GB", gb)
+        } else if mb >= 1.0 {
+            return String(format: "%.1f MB", mb)
+        } else if kb >= 1.0 {
+            return String(format: "%.0f KB", kb)
+        } else {
+            return "\(bytes) B"
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -42,6 +61,13 @@ struct TransferProgressView: View {
                         .font(.system(.title3, design: .rounded))
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
+                    
+                    // Size transferred (e.g. "245.3 MB of 3.2 GB")
+                    if totalSize > 0 {
+                        Text("\(formatBytes(bytesTransferred)) of \(formatBytes(totalSize))")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
                     
                     // Speed and time remaining
                     HStack(spacing: 12) {
