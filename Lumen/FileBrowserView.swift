@@ -795,10 +795,129 @@ struct FileBrowserView: View {
                     Text("Step 1: Mac Preparation (Crucial)")
                         .font(.headline)
                         .foregroundColor(.primary)
-                    Text("• COMPLETELY QUIT these apps if they are running:\n  - Android File Transfer\n  - OpenMTP\n  - Preview\n  - Photos\n• These apps aggressively grab the USB connection and prevent One Share from connecting.")
-                        .font(.body)
+                    
+                    Text("Completely quit these apps if running:")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, 4)
+                    
+                    // Apps to quit list with icons
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Android File Transfer
+                        HStack(spacing: 12) {
+                            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.green)
+                                .frame(width: 24)
+                            Text("Android File Transfer")
+                                .font(.body)
+                        }
+                        
+                        // OpenMTP
+                        HStack(spacing: 12) {
+                            Image(systemName: "externaldrive.fill.badge.icloud")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.blue)
+                                .frame(width: 24)
+                            Text("OpenMTP")
+                                .font(.body)
+                        }
+                        
+                        // Google Drive
+                        HStack(spacing: 12) {
+                            Image(systemName: "icloud.and.arrow.up.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.yellow)
+                                .frame(width: 24)
+                            Text("Google Drive (Desktop Sync)")
+                                .font(.body)
+                        }
+                        
+                        // Samsung Smart Switch
+                        HStack(spacing: 12) {
+                            Image(systemName: "arrow.left.arrow.right.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.blue)
+                                .frame(width: 24)
+                            Text("Samsung Smart Switch")
+                                .font(.body)
+                        }
+                        
+                        // Samsung Flow
+                        HStack(spacing: 12) {
+                            Image(systemName: "link.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.cyan)
+                                .frame(width: 24)
+                            Text("Samsung Flow")
+                                .font(.body)
+                        }
+                        
+                        // Photos
+                        HStack(spacing: 12) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.pink)
+                                .frame(width: 24)
+                            Text("Photos")
+                                .font(.body)
+                        }
+                        
+                        // Preview / Image Capture
+                        HStack(spacing: 12) {
+                            Image(systemName: "camera.viewfinder")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.orange)
+                                .frame(width: 24)
+                            Text("Preview / Image Capture")
+                                .font(.body)
+                        }
+                        
+                        // MacDroid
+                        HStack(spacing: 12) {
+                            Image(systemName: "externaldrive.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.purple)
+                                .frame(width: 24)
+                            Text("MacDroid")
+                                .font(.body)
+                        }
+                        
+                        // AnyTrans / iMazing
+                        HStack(spacing: 12) {
+                            Image(systemName: "apps.iphone")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.indigo)
+                                .frame(width: 24)
+                            Text("AnyTrans / iMazing")
+                                .font(.body)
+                        }
+                        
+                        // Finder (USB devices)
+                        HStack(spacing: 12) {
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.blue)
+                                .frame(width: 24)
+                            Text("Finder (if device is mounted)")
+                                .font(.body)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(Color.red.opacity(0.08))
+                    .cornerRadius(10)
+                    
+                    // Warning message
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text("These apps aggressively grab USB connections and prevent One Share from connecting.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 4)
                     
                     Divider()
                     
