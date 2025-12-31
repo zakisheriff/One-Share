@@ -57,7 +57,7 @@ struct TransferProgressView: View {
                         .foregroundStyle(.secondary)
                     
                     // Percentage
-                    Text("\(Int(progress * 100))%")
+                    Text("\(min(Int(progress * 100), 100))%")
                         .font(.system(.title3, design: .rounded))
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
