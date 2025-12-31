@@ -1313,7 +1313,7 @@ struct FileBrowserView: View {
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
         .onDrag {
-            // Set up the clipboard when drag begins
+            // Set up the clipboard when drag begins (for internal app transfers)
             print("🔍 DRAG: Starting drag for \(item.name)")
             if isSelected && selection.count > 1 {
                 // Dragging multiple selected items
@@ -1326,8 +1326,18 @@ struct FileBrowserView: View {
                 print("🔍 DRAG: Set clipboard with single item: \(item.name)")
             }
             
-            // Create item provider with file path as data
+            // For local files, provide the file URL directly (enables drag to Finder)
+            if fileService is LocalFileService {
+                let fileURL = URL(fileURLWithPath: item.path)
+                let provider = NSItemProvider(object: fileURL as NSURL)
+                print("🔍 DRAG: Created provider with local file URL: \(fileURL.path)")
+                return provider
+            }
+            
+            // For remote files (MTP/iOS), use simple string provider
+            // Internal transfers use clipboard-based system which is fast
             let provider = NSItemProvider(object: item.name as NSString)
+            print("🔍 DRAG: Created string provider for remote file: \(item.name)")
             return provider
         }
         .onTapGesture(count: 2) {
@@ -1399,7 +1409,7 @@ struct FileBrowserView: View {
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
         .contentShape(Rectangle())
         .onDrag {
-            // Set up the clipboard when drag begins
+            // Set up the clipboard when drag begins (for internal app transfers)
             print("🔍 DRAG: Starting drag for \(item.name)")
             if isSelected && selection.count > 1 {
                 // Dragging multiple selected items
@@ -1412,8 +1422,18 @@ struct FileBrowserView: View {
                 print("🔍 DRAG: Set clipboard with single item: \(item.name)")
             }
             
-            // Create item provider with file path as data
+            // For local files, provide the file URL directly (enables drag to Finder)
+            if fileService is LocalFileService {
+                let fileURL = URL(fileURLWithPath: item.path)
+                let provider = NSItemProvider(object: fileURL as NSURL)
+                print("🔍 DRAG: Created provider with local file URL: \(fileURL.path)")
+                return provider
+            }
+            
+            // For remote files (MTP/iOS), use simple string provider
+            // Internal transfers use clipboard-based system which is fast
             let provider = NSItemProvider(object: item.name as NSString)
+            print("🔍 DRAG: Created string provider for remote file: \(item.name)")
             return provider
         }
         .onTapGesture(count: 2) {
