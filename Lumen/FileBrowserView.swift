@@ -56,6 +56,9 @@ struct FileBrowserView: View {
     @State private var itemFrames: [UUID: CGRect] = [:]
     @State private var selectionBeforeDrag: Set<UUID> = []
     
+    // MARK: - Drop Target State
+    @State private var isDropTargeted: Bool = false
+    
     // Computed properties for path display and navigation
     private var canNavigateUp: Bool {
         // For local files, enable up button if not at root
@@ -675,17 +678,39 @@ struct FileBrowserView: View {
             }
         }
         .scrollContentBackground(.hidden) // Use hidden to allow window background to show through
-        .onDrop(of: [.text, .item], isTargeted: nil) { providers in
+        .overlay(
+            // Drop target visual feedback
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.accentColor, lineWidth: 3)
+                .background(Color.accentColor.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .opacity(isDropTargeted ? 1 : 0)
+                .animation(.easeInOut(duration: 0.15), value: isDropTargeted)
+                .allowsHitTesting(false)
+        )
+        .onDrop(of: [.text, .plainText, .item, .fileURL], isTargeted: $isDropTargeted) { providers in
             print("🔍 DROP: Received \(providers.count) providers")
             
-            // First, check if this is an internal clipboard paste
-            if clipboard != nil {
-                print("🔍 DROP: Internal clipboard paste detected")
+            // First, check if this is an internal clipboard paste (from dragging within the app)
+            if let clipboardData = clipboard {
+                print("🔍 DROP: Internal clipboard paste detected with \(clipboardData.items.count) items")
                 onPaste(currentPath)
                 return true
             }
             
-            // Check if any provider can load a URL
+            // Check if any provider has a string (internal drag from this app)
+            for provider in providers {
+                if provider.hasItemConformingToTypeIdentifier("public.plain-text") {
+                    print("🔍 DROP: Found plain text - checking if we have clipboard data")
+                    // The clipboard should have been set by onDrag, but check again
+                    if clipboard != nil {
+                        onPaste(currentPath)
+                        return true
+                    }
+                }
+            }
+            
+            // Check if any provider can load a URL (external file drop from Finder)
             var hasLoadableURLs = false
             for provider in providers {
                 print("🔍 DROP: Checking provider: \(provider)")
@@ -1287,6 +1312,24 @@ struct FileBrowserView: View {
         .padding(8)
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
+        .onDrag {
+            // Set up the clipboard when drag begins
+            print("🔍 DRAG: Starting drag for \(item.name)")
+            if isSelected && selection.count > 1 {
+                // Dragging multiple selected items
+                let selectedItems = filteredAndSortedItems.filter { selection.contains($0.id) }
+                clipboard = ClipboardItem(items: selectedItems, sourceService: fileService, isCut: false)
+                print("🔍 DRAG: Set clipboard with \(selectedItems.count) items")
+            } else {
+                // Dragging single item
+                clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: false)
+                print("🔍 DRAG: Set clipboard with single item: \(item.name)")
+            }
+            
+            // Create item provider with file path as data
+            let provider = NSItemProvider(object: item.name as NSString)
+            return provider
+        }
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
         }
@@ -1355,6 +1398,24 @@ struct FileBrowserView: View {
         .padding(.horizontal, 10)
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
         .contentShape(Rectangle())
+        .onDrag {
+            // Set up the clipboard when drag begins
+            print("🔍 DRAG: Starting drag for \(item.name)")
+            if isSelected && selection.count > 1 {
+                // Dragging multiple selected items
+                let selectedItems = filteredAndSortedItems.filter { selection.contains($0.id) }
+                clipboard = ClipboardItem(items: selectedItems, sourceService: fileService, isCut: false)
+                print("🔍 DRAG: Set clipboard with \(selectedItems.count) items")
+            } else {
+                // Dragging single item
+                clipboard = ClipboardItem(items: [item], sourceService: fileService, isCut: false)
+                print("🔍 DRAG: Set clipboard with single item: \(item.name)")
+            }
+            
+            // Create item provider with file path as data
+            let provider = NSItemProvider(object: item.name as NSString)
+            return provider
+        }
         .onTapGesture(count: 2) {
             handleDoubleClick(on: item)
         }
