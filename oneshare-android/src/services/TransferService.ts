@@ -18,7 +18,7 @@ const OneShareNetwork = NativeModules.OneShareNetwork || {
 interface OneShareNetworkInterface {
     connectToHost(ip: string, port: number): Promise<string>;
     sendFileUDP(ip: string, port: number, filePath: string): Promise<string>;
-    sendFileTCP(ip: string, port: number, filePath: string): Promise<string>;
+    sendFileTCP(ip: string, port: number, filePath: string, fileName?: string): Promise<string>;
     startBleAdvertising(uuid: string, name: string): Promise<string>;
     startBleAdvertisingWithPayload(uuid: string, ip: string, port: number): Promise<string>;
     stopBleAdvertising(): Promise<string>;
@@ -42,10 +42,10 @@ export const TransferService = {
         }
     },
 
-    sendFile: async (ip: string, port: number, filePath: string): Promise<"SUCCESS" | "FAILED" | "CANCELLED" | "DECLINED"> => {
+    sendFile: async (ip: string, port: number, filePath: string, fileName?: string): Promise<"SUCCESS" | "FAILED" | "CANCELLED" | "DECLINED"> => {
         try {
             // Use TCP for reliability with Mac Server
-            const result = await (OneShareNetwork as OneShareNetworkInterface).sendFileTCP(ip, port, filePath);
+            const result = await (OneShareNetwork as OneShareNetworkInterface).sendFileTCP(ip, port, filePath, fileName);
             return result === "Sent" ? "SUCCESS" : "FAILED";
         } catch (error: any) {
             if (error?.code === "CANCELLED" || error?.message?.includes("cancelled")) {

@@ -733,7 +733,13 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun sendFileTCP(ip: String, port: Int, fileUri: String, promise: Promise) {
+    fun sendFileTCP(
+            ip: String,
+            port: Int,
+            fileUri: String,
+            fileNameOverride: String?,
+            promise: Promise
+    ) {
         executor.execute {
             try {
                 val socket = Socket()
@@ -748,7 +754,35 @@ class OneShareNetworkModule(reactContext: ReactApplicationContext) :
                 val fileName: String
                 val fileSize: Long
 
-                if (fileUri.startsWith("content://")) {
+                if (fileNameOverride != null && fileNameOverride.isNotEmpty()) {
+                    fileName = fileNameOverride
+                    // Still need to setup stream/determine size...
+                    if (fileUri.startsWith("content://")) {
+                        val uri = android.net.Uri.parse(fileUri)
+                        fileStream = reactApplicationContext.contentResolver.openInputStream(uri)
+                        val cursor =
+                                reactApplicationContext.contentResolver.query(
+                                        uri,
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                )
+                        val sizeIndex =
+                                cursor?.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                        cursor?.moveToFirst()
+                        fileSize =
+                                if (sizeIndex != null && sizeIndex >= 0) cursor.getLong(sizeIndex)
+                                else 0
+                        cursor?.close()
+                    } else {
+                        val path =
+                                if (fileUri.startsWith("file://")) fileUri.substring(7) else fileUri
+                        val file = File(path)
+                        fileStream = FileInputStream(file)
+                        fileSize = file.length()
+                    }
+                } else if (fileUri.startsWith("content://")) {
                     val uri = android.net.Uri.parse(fileUri)
                     fileStream = reactApplicationContext.contentResolver.openInputStream(uri)
                     val cursor =

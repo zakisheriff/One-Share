@@ -94,7 +94,7 @@ export default function RecentScreen() {
             // setTransferProgress(0); // Unused
 
             console.log(`Sending file: ${file.name} to ${ip}:${port}`);
-            const status = await TransferService.sendFile(ip, port, file.uri);
+            const status = await TransferService.sendFile(ip, port, file.uri, file.name);
 
             if (status === "SUCCESS") {
                 queueRef.current.shift(); // Remove
