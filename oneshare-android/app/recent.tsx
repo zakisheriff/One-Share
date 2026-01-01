@@ -99,6 +99,9 @@ export default function RecentScreen() {
             if (status === "SUCCESS") {
                 queueRef.current.shift(); // Remove
                 await new Promise(resolve => setTimeout(resolve, 500));
+            } else if (status === "CANCELLED") {
+                console.log("Queue processing cancelled by user");
+                break;
             } else {
                 Alert.alert("Error", `Failed to send ${file.name}`);
                 break;
