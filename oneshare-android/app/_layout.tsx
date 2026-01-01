@@ -186,6 +186,7 @@ function RootLayoutNav() {
         isReceiving={transferState.type === 'receiving'}
         eta={transferState.eta} // Pass ETA
         onCancel={() => {
+          TransferService.cancelTransfer();
           setTransferState(prev => ({ ...prev, visible: false, eta: null }));
         }}
       />

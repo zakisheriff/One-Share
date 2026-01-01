@@ -67,11 +67,13 @@ export default function HomeScreen() {
                 const result = await PermissionsAndroid.requestMultiple([
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
                     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+                    PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
                     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
                 ]);
                 return (
                     result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
                     result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+                    result['android.permission.BLUETOOTH_ADVERTISE'] === PermissionsAndroid.RESULTS.GRANTED &&
                     result['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED
                 );
             } else {
@@ -126,11 +128,21 @@ export default function HomeScreen() {
             if (device) {
                 const deviceName = device.name || device.localName || "Unknown";
 
+                // DEBUG: Log every device to see what we are finding
+                // console.log(`Discovered: ${deviceName} (${device.id}) - UUIDs: ${device.serviceUUIDs}`);
+
                 // Check if it matches our service UUID OR has the name "Flinch"
-                const isFlinch = (device.serviceUUIDs && device.serviceUUIDs.includes(SERVICE_UUID)) ||
-                    (deviceName && (deviceName.includes("Flinch") || deviceName.includes("One Share")));
+                // OR has our DATA_UUID in service data (Mac sends this)
+                // Normalize UUIDs to lowercase for comparison
+                const serviceUUIDLower = SERVICE_UUID.toLowerCase();
+                const deviceUUIDs = device.serviceUUIDs ? device.serviceUUIDs.map(u => u.toLowerCase()) : [];
+
+                const isFlinch = deviceUUIDs.includes(serviceUUIDLower) ||
+                    (deviceName && (deviceName.includes("Flinch") || deviceName.includes("One Share"))) ||
+                    (device.serviceData && device.serviceData[DATA_UUID]); // Check for Data UUID presence
 
                 if (isFlinch) {
+                    console.log(`Found Candidate: ${deviceName} (${device.id})`);
                     // Parse Service Data for IP/Port
                     let ip: string | undefined;
                     let port: number | undefined;
@@ -138,7 +150,9 @@ export default function HomeScreen() {
                     if (device.serviceData && device.serviceData[DATA_UUID]) {
                         try {
                             const raw = atob(device.serviceData[DATA_UUID]);
+                            // console.log("Raw Data:", raw);
                             if (raw.length >= 6) {
+                                // Provide fallback if parsing fails or data is different format
                                 ip = `${raw.charCodeAt(0)}.${raw.charCodeAt(1)}.${raw.charCodeAt(2)}.${raw.charCodeAt(3)}`;
                                 port = (raw.charCodeAt(4) << 8) | raw.charCodeAt(5);
                                 console.log("Parsed Service Data:", ip, port);
